@@ -1,20 +1,79 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
+    <q-header elevated class="bg-primary text-white">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> Quasar App </q-toolbar-title>
+        <q-toolbar-title class="text-weight-bold">
+          <q-icon name="account_balance" class="q-mr-sm" />
+          MindLifeKey
+        </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <div class="row items-center q-gutter-sm">
+          <q-btn flat round icon="notifications" :to="{ name: 'notifications' }">
+            <q-badge v-if="unreadNotificationsCount > 0" color="negative" floating>
+              {{ unreadNotificationsCount }}
+            </q-badge>
+          </q-btn>
+          <q-btn flat round icon="settings" />
+          <q-btn flat round icon="logout" @click="logout" />
+        </div>
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-1">
       <q-list>
-        <q-item-label header> Essential Links </q-item-label>
+        <q-item-label header class="text-grey-8">
+          <q-icon name="dashboard" class="q-mr-sm" />
+          Navigation
+        </q-item-label>
 
-        <EssentialLink v-for="link in linksList" :key="link.title" v-bind="link" />
+        <q-item v-for="link in navigationLinks" :key="link.title" clickable v-ripple :to="link.route"
+          class="navigation-item" :class="{ 'active': $route.name === link.routeName }">
+          <q-item-section avatar>
+            <q-icon :name="link.icon" :color="$route.name === link.routeName ? 'primary' : 'grey-6'" />
+          </q-item-section>
+
+          <q-item-section>
+            <q-item-label>{{ link.title }}</q-item-label>
+            <q-item-label caption>{{ link.caption }}</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-separator class="q-my-md" />
+
+        <q-item-label header class="text-grey-8">
+          <q-icon name="assessment" class="q-mr-sm" />
+          Quick Stats
+        </q-item-label>
+
+        <q-item>
+          <q-item-section>
+            <q-item-label class="text-weight-bold text-positive">
+              {{ formatCurrency(monthlyIncome) }}
+            </q-item-label>
+            <q-item-label caption>Monthly Income</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item>
+          <q-item-section>
+            <q-item-label class="text-weight-bold text-negative">
+              {{ formatCurrency(monthlyExpenses) }}
+            </q-item-label>
+            <q-item-label caption>Monthly Expenses</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item>
+          <q-item-section>
+            <q-item-label class="text-weight-bold"
+              :class="(monthlyIncome - monthlyExpenses) >= 0 ? 'text-positive' : 'text-negative'">
+              {{ formatCurrency(monthlyIncome - monthlyExpenses) }}
+            </q-item-label>
+            <q-item-label caption>Monthly Balance</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 
@@ -25,57 +84,106 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import EssentialLink from 'components/EssentialLink.vue'
+import { ref, computed } from 'vue'
+import { useFinancialStore } from 'src/stores/financial'
+import { useAuthStore } from 'src/stores/auth'
+import { formatCurrency } from 'src/utils/formatters'
 
-const linksList = [
+const financialStore = useFinancialStore()
+const authStore = useAuthStore()
+
+const navigationLinks = [
   {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev',
+    title: 'Dashboard',
+    caption: 'Overview & insights',
+    icon: 'dashboard',
+    route: '/',
+    routeName: 'dashboard'
   },
   {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
-    icon: 'code',
-    link: 'https://github.com/quasarframework',
+    title: 'Transactions',
+    caption: 'Income & expenses',
+    icon: 'receipt_long',
+    route: '/transactions',
+    routeName: 'transactions'
   },
   {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
-    icon: 'chat',
-    link: 'https://chat.quasar.dev',
+    title: 'Goals',
+    caption: 'Savings targets',
+    icon: 'flag',
+    route: '/goals',
+    routeName: 'goals'
   },
   {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
-    icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev',
+    title: 'Reports',
+    caption: 'Analytics & export',
+    icon: 'assessment',
+    route: '/reports',
+    routeName: 'reports'
   },
   {
-    title: 'Twitter',
-    caption: '@quasarframework',
-    icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev',
+    title: 'Recurring',
+    caption: 'Automated transactions',
+    icon: 'repeat',
+    route: '/recurring',
+    routeName: 'recurring'
   },
   {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
-    icon: 'public',
-    link: 'https://facebook.quasar.dev',
+    title: 'Forecaster',
+    caption: 'Cash flow projections',
+    icon: 'trending_up',
+    route: '/forecaster',
+    routeName: 'forecaster'
   },
   {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev',
+    title: 'Enhanced Goals',
+    caption: 'Gamified savings',
+    icon: 'emoji_events',
+    route: '/enhanced-goals',
+    routeName: 'enhanced-goals'
   },
+  {
+    title: 'Advanced Reports',
+    caption: 'Financial insights',
+    icon: 'analytics',
+    route: '/advanced-reports',
+    routeName: 'advanced-reports'
+  },
+  {
+    title: 'Notifications',
+    caption: 'Smart reminders',
+    icon: 'notifications',
+    route: '/notifications',
+    routeName: 'notifications'
+  }
 ]
+
+const { monthlyIncome, monthlyExpenses } = financialStore
+
+const unreadNotificationsCount = computed(() => financialStore.getUnreadNotificationsCount())
 
 const leftDrawerOpen = ref(false)
 
 function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value
 }
+
+function logout() {
+  authStore.logout()
+}
 </script>
+
+<style scoped>
+.navigation-item {
+  transition: background-color 0.2s;
+}
+
+.navigation-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.navigation-item.active {
+  background-color: rgba(25, 118, 210, 0.12);
+  border-right: 3px solid #1976d2;
+}
+</style>
