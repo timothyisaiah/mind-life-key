@@ -1,177 +1,185 @@
 <template>
   <q-page class="goals-page">
-    <!-- Header -->
-    <div class="page-header q-pa-md">
-      <div class="row items-center justify-between">
-        <div>
-          <h4 class="text-h4 text-weight-bold q-ma-none">Savings Goals</h4>
-          <p class="text-subtitle1 text-grey-6 q-ma-none">Track your financial goals and milestones</p>
-        </div>
-        <q-btn color="primary" icon="add" label="New Goal" @click="showAddGoalDialog" />
-      </div>
-    </div>
-
-    <!-- Goals Overview Cards -->
-    <div class="q-pa-md">
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-4">
-          <q-card class="overview-card">
-            <q-card-section class="text-center">
-              <q-icon name="flag" size="2rem" color="primary" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ goals.length }}</div>
-              <div class="text-caption text-grey-6">Total Goals</div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <div class="col-12 col-md-4">
-          <q-card class="overview-card">
-            <q-card-section class="text-center">
-              <q-icon name="check_circle" size="2rem" color="positive" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ completedGoals.length }}</div>
-              <div class="text-caption text-grey-6">Completed</div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <div class="col-12 col-md-4">
-          <q-card class="overview-card">
-            <q-card-section class="text-center">
-              <q-icon name="schedule" size="2rem" color="warning" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ activeGoals.length }}</div>
-              <div class="text-caption text-grey-6">In Progress</div>
-            </q-card-section>
-          </q-card>
+    <!-- Pull to Refresh -->
+    <q-pull-to-refresh @refresh="onRefresh">
+      <!-- Header -->
+      <div class="page-header q-pa-md">
+        <div class="row items-center justify-between">
+          <div>
+            <h4 class="text-h4 text-weight-bold q-ma-none">Savings Goals</h4>
+            <p class="text-subtitle1 text-grey-6 q-ma-none">
+              Track your financial goals and milestones
+              <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
+              <span v-else class="text-white q-ml-xs">• Live</span>
+            </p>
+          </div>
+          <q-btn color="primary" icon="add" label="New Goal" @click="showAddGoalDialog" />
         </div>
       </div>
-    </div>
 
-    <!-- Goals List -->
-    <div class="q-pa-md">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Your Goals</div>
-
-          <div v-if="goals.length === 0" class="text-center text-grey-6 q-py-xl">
-            <q-icon name="flag" size="4rem" class="q-mb-md" />
-            <div class="text-h6">No goals yet</div>
-            <div class="text-body2">Create your first savings goal to get started</div>
+      <!-- Goals Overview Cards -->
+      <div class="q-pa-md" :key="`overview-${refreshKey}`">
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-md-4">
+            <q-card class="overview-card">
+              <q-card-section class="text-center">
+                <q-icon name="flag" size="2rem" color="primary" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold">{{ goals.length }}</div>
+                <div class="text-caption text-grey-6">Total Goals</div>
+              </q-card-section>
+            </q-card>
           </div>
 
-          <div v-else class="row q-col-gutter-md">
-            <div v-for="goal in goals" :key="goal.id" class="col-12 col-md-6 col-lg-4">
-              <q-card class="goal-card" :class="{
-                'goal-completed': isGoalCompleted(goal),
-                'goal-overdue': isGoalOverdue(goal)
-              }">
-                <q-card-section>
-                  <div class="row items-center justify-between q-mb-sm">
-                    <div class="text-subtitle1 text-weight-bold">{{ goal.name }}</div>
-                    <q-btn-group flat>
-                      <q-btn flat round icon="edit" color="primary" size="sm" @click="editGoal(goal)" />
-                      <q-btn flat round icon="delete" color="negative" size="sm" @click="confirmDeleteGoal(goal)" />
-                    </q-btn-group>
-                  </div>
+          <div class="col-12 col-md-4">
+            <q-card class="overview-card">
+              <q-card-section class="text-center">
+                <q-icon name="check_circle" size="2rem" color="positive" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold">{{ completedGoals.length }}</div>
+                <div class="text-caption text-grey-6">Completed</div>
+              </q-card-section>
+            </q-card>
+          </div>
 
-                  <div class="text-caption text-grey-6 q-mb-sm">
-                    Target: {{ formatCurrency(goal.targetAmount) }} by {{ formatDate(goal.targetDate) }}
-                  </div>
+          <div class="col-12 col-md-4">
+            <q-card class="overview-card">
+              <q-card-section class="text-center">
+                <q-icon name="schedule" size="2rem" color="warning" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold">{{ activeGoals.length }}</div>
+                <div class="text-caption text-grey-6">In Progress</div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </div>
 
-                  <q-linear-progress :value="Math.min(goal.currentAmount / goal.targetAmount, 1)"
-                    :color="getProgressColor(goal)" size="20px" rounded class="q-mb-sm" />
+      <!-- Goals List -->
+      <div class="q-pa-md">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6 q-mb-md">Your Goals</div>
 
-                  <div class="row items-center justify-between">
-                    <div class="text-caption">
-                      {{ formatCurrency(goal.currentAmount) }} / {{ formatCurrency(goal.targetAmount) }}
-                    </div>
-                    <div class="text-caption text-weight-bold">
-                      {{ Math.round((goal.currentAmount / goal.targetAmount) * 100) }}%
-                    </div>
-                  </div>
-
-                  <div v-if="goal.description" class="text-caption text-grey-6 q-mt-sm">
-                    {{ goal.description }}
-                  </div>
-
-                  <div class="q-mt-md">
-                    <q-btn flat color="primary" size="sm" icon="add" label="Add Money"
-                      @click="showAddMoneyDialog(goal)" />
-                  </div>
-                </q-card-section>
-              </q-card>
+            <div v-if="goals.length === 0" class="text-center text-grey-6 q-py-xl">
+              <q-icon name="flag" size="4rem" class="q-mb-md" />
+              <div class="text-h6">No goals yet</div>
+              <div class="text-body2">Create your first savings goal to get started</div>
             </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
 
-    <!-- Add/Edit Goal Dialog -->
-    <q-dialog v-model="showGoalDialog" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">
-            {{ editingGoal ? 'Edit Goal' : 'Create New Goal' }}
-          </div>
-        </q-card-section>
-        <q-card-section>
-          <q-form @submit="saveGoal" class="q-col-gutter-md">
-            <q-input v-model="goalForm.name" label="Goal Name" outlined
-              :rules="[val => !!val || 'Goal name is required']" />
-            <q-input v-model.number="goalForm.targetAmount" label="Target Amount" type="number" step="0.01" outlined
-              :rules="[val => val > 0 || 'Target amount must be greater than 0']" />
-            <q-input v-model="goalForm.targetDate" label="Target Date" type="date" outlined
-              :rules="[val => !!val || 'Target date is required']" />
-            <q-input v-model="goalForm.description" label="Description (optional)" outlined type="textarea" rows="3" />
-          </q-form>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeGoalDialog" />
-          <q-btn color="primary" label="Save" @click="saveGoal" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+            <div v-else class="row q-col-gutter-md" :key="refreshKey">
+              <div v-for="goal in goals" :key="goal.id" class="col-12 col-md-6 col-lg-4">
+                <q-card class="goal-card" :class="{
+                  'goal-completed': isGoalCompleted(goal),
+                  'goal-overdue': isGoalOverdue(goal)
+                }">
+                  <q-card-section>
+                    <div class="row items-center justify-between q-mb-sm">
+                      <div class="text-subtitle1 text-weight-bold">{{ goal.name }}</div>
+                      <q-btn-group flat>
+                        <q-btn flat round icon="edit" color="primary" size="sm" @click="editGoal(goal)" />
+                        <q-btn flat round icon="delete" color="negative" size="sm" @click="confirmDeleteGoal(goal)" />
+                      </q-btn-group>
+                    </div>
 
-    <!-- Add Money Dialog -->
-    <q-dialog v-model="showAddMoneyDialogState" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Add Money to Goal</div>
-          <div class="text-subtitle2 text-grey-6">{{ selectedGoal?.name }}</div>
-        </q-card-section>
-        <q-card-section>
-          <q-form @submit="addMoneyToGoal" class="q-col-gutter-md">
-            <q-input v-model.number="addMoneyForm.amount" label="Amount to Add" type="number" step="0.01" outlined
-              :rules="[val => val > 0 || 'Amount must be greater than 0']" />
-            <q-input v-model="addMoneyForm.notes" label="Notes (optional)" outlined type="textarea" rows="2" />
-          </q-form>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeAddMoneyDialog" />
-          <q-btn color="primary" label="Add Money" @click="addMoneyToGoal" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+                    <div class="text-caption text-grey-6 q-mb-sm">
+                      Target: {{ formatCurrency(goal.targetAmount) }} by {{ formatDate(goal.targetDate) }}
+                    </div>
 
-    <!-- Delete Confirmation Dialog -->
-    <q-dialog v-model="showDeleteDialog" persistent>
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Delete Goal</div>
-        </q-card-section>
-        <q-card-section>
-          Are you sure you want to delete "{{ goalToDelete?.name }}"?
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="showDeleteDialog = false" />
-          <q-btn color="negative" label="Delete" @click="deleteGoal" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+                    <q-linear-progress :value="Math.min(goal.currentAmount / goal.targetAmount, 1)"
+                      :color="getProgressColor(goal)" size="20px" rounded class="q-mb-sm" />
+
+                    <div class="row items-center justify-between">
+                      <div class="text-caption">
+                        {{ formatCurrency(goal.currentAmount) }} / {{ formatCurrency(goal.targetAmount) }}
+                      </div>
+                      <div class="text-caption text-weight-bold">
+                        {{ Math.round((goal.currentAmount / goal.targetAmount) * 100) }}%
+                      </div>
+                    </div>
+
+                    <div v-if="goal.description" class="text-caption text-grey-6 q-mt-sm">
+                      {{ goal.description }}
+                    </div>
+
+                    <div class="q-mt-md">
+                      <q-btn flat color="primary" size="sm" icon="add" label="Add Money"
+                        @click="showAddMoneyDialog(goal)" />
+                    </div>
+                  </q-card-section>
+                </q-card>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- Add/Edit Goal Dialog -->
+      <q-dialog v-model="showGoalDialog" persistent>
+        <q-card style="min-width: 500px">
+          <q-card-section>
+            <div class="text-h6">
+              {{ editingGoal ? 'Edit Goal' : 'Create New Goal' }}
+            </div>
+          </q-card-section>
+          <q-card-section>
+            <q-form @submit="saveGoal" class="q-col-gutter-md">
+              <q-input v-model="goalForm.name" label="Goal Name" outlined
+                :rules="[val => !!val || 'Goal name is required']" />
+              <q-input v-model.number="goalForm.targetAmount" label="Target Amount" type="number" step="0.01" outlined
+                :rules="[val => val > 0 || 'Target amount must be greater than 0']" />
+              <q-input v-model="goalForm.targetDate" label="Target Date" type="date" outlined
+                :rules="[val => !!val || 'Target date is required']" />
+              <q-input v-model="goalForm.description" label="Description (optional)" outlined type="textarea"
+                rows="3" />
+            </q-form>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="Cancel" @click="closeGoalDialog" />
+            <q-btn color="primary" label="Save" @click="saveGoal" />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Add Money Dialog -->
+      <q-dialog v-model="showAddMoneyDialogState" persistent>
+        <q-card style="min-width: 400px">
+          <q-card-section>
+            <div class="text-h6">Add Money to Goal</div>
+            <div class="text-subtitle2 text-grey-6">{{ selectedGoal?.name }}</div>
+          </q-card-section>
+          <q-card-section>
+            <q-form @submit="addMoneyToGoal" class="q-col-gutter-md">
+              <q-input v-model.number="addMoneyForm.amount" label="Amount to Add" type="number" step="0.01" outlined
+                :rules="[val => val > 0 || 'Amount must be greater than 0']" />
+              <q-input v-model="addMoneyForm.notes" label="Notes (optional)" outlined type="textarea" rows="2" />
+            </q-form>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="Cancel" @click="closeAddMoneyDialog" />
+            <q-btn color="primary" label="Add Money" @click="addMoneyToGoal" />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Delete Confirmation Dialog -->
+      <q-dialog v-model="showDeleteDialog" persistent>
+        <q-card>
+          <q-card-section>
+            <div class="text-h6">Delete Goal</div>
+          </q-card-section>
+          <q-card-section>
+            Are you sure you want to delete "{{ goalToDelete?.name }}"?
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="Cancel" @click="showDeleteDialog = false" />
+            <q-btn color="negative" label="Delete" @click="deleteGoal" />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+    </q-pull-to-refresh>
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency, formatDate } from 'src/utils/formatters'
 
@@ -184,6 +192,11 @@ const showDeleteDialog = ref(false)
 const editingGoal = ref(null)
 const selectedGoal = ref(null)
 const goalToDelete = ref(null)
+
+// Live page state
+const isRefreshing = ref(false)
+const lastUpdateTime = ref(new Date())
+const refreshKey = ref(0)
 
 const goalForm = ref({
   name: '',
@@ -198,10 +211,10 @@ const addMoneyForm = ref({
 })
 
 // Computed
-const { goals } = financialStore
+const goals = computed(() => financialStore.goals)
 
 const activeGoals = computed(() => {
-  return goals.filter(goal => {
+  return goals.value.filter(goal => {
     const targetDate = new Date(goal.targetDate)
     const today = new Date()
     return targetDate > today && goal.currentAmount < goal.targetAmount
@@ -209,7 +222,7 @@ const activeGoals = computed(() => {
 })
 
 const completedGoals = computed(() => {
-  return goals.filter(goal => goal.currentAmount >= goal.targetAmount)
+  return goals.value.filter(goal => goal.currentAmount >= goal.targetAmount)
 })
 
 // Methods
@@ -272,6 +285,10 @@ const saveGoal = () => {
       financialStore.addGoal(goalForm.value)
     }
     closeGoalDialog()
+    // Force immediate refresh
+    setTimeout(() => {
+      triggerPageRefresh()
+    }, 100)
   }
 }
 
@@ -300,6 +317,10 @@ const addMoneyToGoal = () => {
       currentAmount: newAmount
     })
     closeAddMoneyDialog()
+    // Force immediate refresh
+    setTimeout(() => {
+      triggerPageRefresh()
+    }, 100)
   }
 }
 
@@ -313,8 +334,37 @@ const deleteGoal = () => {
     financialStore.deleteGoal(goalToDelete.value.id)
     showDeleteDialog.value = false
     goalToDelete.value = null
+    // Force immediate refresh
+    setTimeout(() => {
+      triggerPageRefresh()
+    }, 100)
   }
 }
+
+// Live page methods
+const triggerPageRefresh = async () => {
+  isRefreshing.value = true
+  lastUpdateTime.value = new Date()
+  refreshKey.value++
+
+  // Force re-computation of all data
+  await nextTick()
+
+  // Small delay to show refresh indicator
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 500)
+}
+
+const onRefresh = async (done) => {
+  await triggerPageRefresh()
+  done()
+}
+
+// Watch for changes in goals data
+watch(() => financialStore.goals, () => {
+  triggerPageRefresh()
+}, { deep: true })
 
 onMounted(() => {
   financialStore.loadFromLocalStorage()
@@ -360,5 +410,19 @@ onMounted(() => {
 .q-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

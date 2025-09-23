@@ -11,7 +11,11 @@
           <div class="text-h5 text-weight-bold" :class="netWorth >= 0 ? 'text-positive' : 'text-negative'">
             {{ formatCurrency(netWorth) }}
           </div>
-          <div class="text-caption text-grey-6">Net Worth</div>
+          <div class="text-caption text-grey-6">
+            Net Worth
+            <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
+            <span v-else class="text-white q-ml-xs">• Live</span>
+          </div>
         </div>
       </div>
     </div>
@@ -120,10 +124,11 @@
     <!-- Charts Section -->
     <div class="row q-col-gutter-md q-pa-md">
       <div class="col-12 col-md-6">
-        <ExpenseChart :expenses="expensesByCategory" />
+        <ExpenseChart :key="`expense-${refreshKey}`" :expenses="expensesByCategory" />
       </div>
       <div class="col-12 col-md-6">
-        <BalanceChart :transactions="transactions" :starting-balance="userSettings.startingBalance" />
+        <BalanceChart :key="`balance-${refreshKey}`" :transactions="transactions"
+          :starting-balance="userSettings.startingBalance" />
       </div>
     </div>
 
@@ -426,7 +431,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency, formatDate, formatDateShort } from 'src/utils/formatters'
 import { loadDemoData } from 'src/utils/demoData'
@@ -498,6 +503,11 @@ const showGoalDialog = ref(false)
 const transactionDialogType = ref('expense')
 const fabExpanded = ref(false)
 
+// Live dashboard state
+const isRefreshing = ref(false)
+const lastUpdateTime = ref(new Date())
+const refreshKey = ref(0) // Force component re-renders
+
 // Form data
 const newTransaction = ref({
   description: '',
@@ -547,6 +557,7 @@ const addTransaction = () => {
   if (newTransaction.value.description && newTransaction.value.amount > 0 && newTransaction.value.categoryId) {
     financialStore.addTransaction(newTransaction.value)
     closeTransactionDialog()
+    // Dashboard will auto-refresh via watchers
   }
 }
 
@@ -568,11 +579,72 @@ const addGoal = () => {
   if (newGoal.value.name && newGoal.value.targetAmount > 0 && newGoal.value.targetDate) {
     financialStore.addGoal(newGoal.value)
     closeGoalDialog()
+    // Dashboard will auto-refresh via watchers
   }
 }
 
 const loadDemoDataHandler = () => {
   loadDemoData(financialStore)
+  triggerDashboardRefresh()
+}
+
+// Live dashboard methods
+const triggerDashboardRefresh = async () => {
+  isRefreshing.value = true
+  lastUpdateTime.value = new Date()
+  refreshKey.value++
+
+  // Force re-computation of all data
+  await nextTick()
+
+  // Process any pending operations
+  financialStore.processRecurringTransactions()
+  financialStore.generateSmartNotifications()
+
+  // Small delay to show refresh indicator
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 500)
+}
+
+// Watch for changes in financial data
+watch(() => financialStore.transactions, () => {
+  triggerDashboardRefresh()
+}, { deep: true })
+
+watch(() => financialStore.goals, () => {
+  triggerDashboardRefresh()
+}, { deep: true })
+
+watch(() => financialStore.recurringTransactions, () => {
+  triggerDashboardRefresh()
+}, { deep: true })
+
+watch(() => financialStore.userSettings, () => {
+  triggerDashboardRefresh()
+}, { deep: true })
+
+// Watch for changes in categories
+watch(() => financialStore.categories, () => {
+  triggerDashboardRefresh()
+}, { deep: true })
+
+// Auto-refresh every 30 seconds
+let autoRefreshInterval = null
+
+const startAutoRefresh = () => {
+  autoRefreshInterval = setInterval(() => {
+    if (!isRefreshing.value) {
+      triggerDashboardRefresh()
+    }
+  }, 30000) // 30 seconds
+}
+
+const stopAutoRefresh = () => {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval)
+    autoRefreshInterval = null
+  }
 }
 
 onMounted(() => {
@@ -582,6 +654,13 @@ onMounted(() => {
   financialStore.processRecurringTransactions()
   // Generate smart notifications
   financialStore.generateSmartNotifications()
+  // Start auto-refresh
+  startAutoRefresh()
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  stopAutoRefresh()
 })
 </script>
 
@@ -619,5 +698,18 @@ onMounted(() => {
 
 .notification-card.upcoming {
   border-left-color: #FF9800;
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -1,95 +1,103 @@
 <template>
   <q-page class="transactions-page">
-    <!-- Header -->
-    <div class="page-header q-pa-md">
-      <div class="row items-center justify-between">
-        <div>
-          <h4 class="text-h4 text-weight-bold q-ma-none">Transactions</h4>
-          <p class="text-subtitle1 text-grey-6 q-ma-none">Manage your income and expenses</p>
-        </div>
-        <div class="row q-gutter-sm">
-          <q-btn color="primary" icon="add" label="Add Income" @click="showAddTransactionDialog('income')" />
-          <q-btn color="negative" icon="remove" label="Add Expense" @click="showAddTransactionDialog('expense')" />
+    <!-- Pull to Refresh -->
+    <q-pull-to-refresh @refresh="onRefresh">
+      <!-- Header -->
+      <div class="page-header q-pa-md">
+        <div class="row items-center justify-between">
+          <div>
+            <h4 class="text-h4 text-weight-bold q-ma-none">Transactions</h4>
+            <p class="text-subtitle1 text-grey-6 q-ma-none">
+              Manage your income and expenses
+              <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
+              <span v-else class="text-white q-ml-xs">• Live</span>
+            </p>
+          </div>
+          <div class="row q-gutter-sm">
+            <q-btn color="primary" icon="add" label="Add Income" @click="showAddTransactionDialog('income')" />
+            <q-btn color="negative" icon="remove" label="Add Expense" @click="showAddTransactionDialog('expense')" />
+            <!-- <q-btn flat color="white" icon="refresh" @click="triggerPageRefresh" :loading="isRefreshing" /> -->
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Filters -->
-    <div class="q-pa-md">
-      <q-card>
-        <q-card-section>
-          <div class="row q-col-gutter-md items-center">
-            <div class="col-12 col-md-3">
-              <q-select v-model="filters.type" :options="typeOptions" label="Type" outlined clearable emit-value
-                map-options />
+      <!-- Filters -->
+      <div class="q-pa-md">
+        <q-card>
+          <q-card-section>
+            <div class="row q-col-gutter-md items-center">
+              <div class="col-12 col-md-3">
+                <q-select v-model="filters.type" :options="typeOptions" label="Type" outlined clearable emit-value
+                  map-options />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-select v-model="filters.categoryId" :options="categoryOptions" label="Category" outlined clearable
+                  emit-value map-options />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-input v-model="filters.startDate" label="Start Date" type="date" outlined />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-input v-model="filters.endDate" label="End Date" type="date" outlined />
+              </div>
             </div>
-            <div class="col-12 col-md-3">
-              <q-select v-model="filters.categoryId" :options="categoryOptions" label="Category" outlined clearable
-                emit-value map-options />
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- Transactions List -->
+      <div class="q-pa-md">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6 q-mb-md">
+              Transactions ({{ filteredTransactions.length }})
             </div>
-            <div class="col-12 col-md-3">
-              <q-input v-model="filters.startDate" label="Start Date" type="date" outlined />
+
+            <div v-if="filteredTransactions.length === 0" class="text-center text-grey-6 q-py-xl">
+              <q-icon name="receipt_long" size="4rem" class="q-mb-md" />
+              <div class="text-h6">No transactions found</div>
+              <div class="text-body2">Add your first transaction to get started</div>
             </div>
-            <div class="col-12 col-md-3">
-              <q-input v-model="filters.endDate" label="End Date" type="date" outlined />
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
 
-    <!-- Transactions List -->
-    <div class="q-pa-md">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6 q-mb-md">
-            Transactions ({{ filteredTransactions.length }})
-          </div>
+            <div v-else>
+              <q-list separator :key="refreshKey">
+                <q-item v-for="transaction in filteredTransactions" :key="transaction.id" class="transaction-item">
+                  <q-item-section avatar>
+                    <q-avatar :color="transaction.type === 'income' ? 'positive' : 'negative'" text-color="white"
+                      :icon="transaction.type === 'income' ? 'add_circle' : 'remove_circle'" />
+                  </q-item-section>
 
-          <div v-if="filteredTransactions.length === 0" class="text-center text-grey-6 q-py-xl">
-            <q-icon name="receipt_long" size="4rem" class="q-mb-md" />
-            <div class="text-h6">No transactions found</div>
-            <div class="text-body2">Add your first transaction to get started</div>
-          </div>
-
-          <div v-else>
-            <q-list separator>
-              <q-item v-for="transaction in filteredTransactions" :key="transaction.id" class="transaction-item">
-                <q-item-section avatar>
-                  <q-avatar :color="transaction.type === 'income' ? 'positive' : 'negative'" text-color="white"
-                    :icon="transaction.type === 'income' ? 'add_circle' : 'remove_circle'" />
-                </q-item-section>
-
-                <q-item-section>
-                  <q-item-label class="text-weight-bold">{{ transaction.description }}</q-item-label>
-                  <q-item-label caption>
-                    {{ getCategoryName(transaction.categoryId) }} • {{ formatDate(transaction.date)
-                    }}
-                  </q-item-label>
-                </q-item-section>
-
-                <q-item-section side>
-                  <div class="text-right">
-                    <q-item-label :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
-                      class="text-h6 text-weight-bold">
-                      {{ transaction.type === 'income' ? '+' : '-' }}{{
-                        formatCurrency(transaction.amount) }}
+                  <q-item-section>
+                    <q-item-label class="text-weight-bold">{{ transaction.description }}</q-item-label>
+                    <q-item-label caption>
+                      {{ getCategoryName(transaction.categoryId) }} • {{ formatDate(transaction.date)
+                      }}
                     </q-item-label>
-                  </div>
-                </q-item-section>
+                  </q-item-section>
 
-                <q-item-section side>
-                  <q-btn-group flat>
-                    <q-btn flat round icon="edit" color="primary" @click="editTransaction(transaction)" />
-                    <q-btn flat round icon="delete" color="negative" @click="confirmDeleteTransaction(transaction)" />
-                  </q-btn-group>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
+                  <q-item-section side>
+                    <div class="text-right">
+                      <q-item-label :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
+                        class="text-h6 text-weight-bold">
+                        {{ transaction.type === 'income' ? '+' : '-' }}{{
+                          formatCurrency(transaction.amount) }}
+                      </q-item-label>
+                    </div>
+                  </q-item-section>
+
+                  <q-item-section side>
+                    <q-btn-group flat>
+                      <q-btn flat round icon="edit" color="primary" @click="editTransaction(transaction)" />
+                      <q-btn flat round icon="delete" color="negative" @click="confirmDeleteTransaction(transaction)" />
+                    </q-btn-group>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </q-pull-to-refresh>
 
     <!-- Add/Edit Transaction Dialog -->
     <q-dialog v-model="showTransactionDialog" persistent>
@@ -138,7 +146,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency, formatDate } from 'src/utils/formatters'
 
@@ -150,6 +158,11 @@ const showDeleteDialog = ref(false)
 const transactionDialogType = ref('expense')
 const editingTransaction = ref(null)
 const transactionToDelete = ref(null)
+
+// Live page state
+const isRefreshing = ref(false)
+const lastUpdateTime = ref(new Date())
+const refreshKey = ref(0)
 
 const filters = ref({
   type: null,
@@ -168,7 +181,8 @@ const transactionForm = ref({
 })
 
 // Computed
-const { transactions, categories } = financialStore
+const transactions = computed(() => financialStore.transactions)
+const categories = computed(() => financialStore.categories)
 
 const typeOptions = [
   { label: 'All', value: null },
@@ -177,14 +191,14 @@ const typeOptions = [
 ]
 
 const categoryOptions = computed(() => {
-  return categories.map(cat => ({
+  return categories.value.map(cat => ({
     label: cat.name,
     value: cat.id
   }))
 })
 
 const filteredTransactions = computed(() => {
-  let filtered = [...transactions]
+  let filtered = [...transactions.value]
 
   if (filters.value.type) {
     filtered = filtered.filter(t => t.type === filters.value.type)
@@ -207,7 +221,7 @@ const filteredTransactions = computed(() => {
 
 // Methods
 const getCategoryName = (categoryId) => {
-  const category = categories.find(cat => cat.id === categoryId)
+  const category = categories.value.find(cat => cat.id === categoryId)
   return category ? category.name : 'Unknown'
 }
 
@@ -260,6 +274,10 @@ const saveTransaction = () => {
       financialStore.addTransaction(transactionForm.value)
     }
     closeTransactionDialog()
+    // Force immediate refresh
+    setTimeout(() => {
+      triggerPageRefresh()
+    }, 100)
   }
 }
 
@@ -273,8 +291,42 @@ const deleteTransaction = () => {
     financialStore.deleteTransaction(transactionToDelete.value.id)
     showDeleteDialog.value = false
     transactionToDelete.value = null
+    // Force immediate refresh
+    setTimeout(() => {
+      triggerPageRefresh()
+    }, 100)
   }
 }
+
+// Live page methods
+const triggerPageRefresh = async () => {
+  isRefreshing.value = true
+  lastUpdateTime.value = new Date()
+  refreshKey.value++
+
+  // Force re-computation of all data
+  await nextTick()
+
+  // Small delay to show refresh indicator
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 500)
+}
+
+const onRefresh = async (done) => {
+  await triggerPageRefresh()
+  done()
+}
+
+// Watch for changes in transactions data
+watch(() => financialStore.transactions, () => {
+  triggerPageRefresh()
+}, { deep: true, immediate: false })
+
+// Watch for changes in categories
+watch(() => financialStore.categories, () => {
+  triggerPageRefresh()
+}, { deep: true, immediate: false })
 
 onMounted(() => {
   financialStore.loadFromLocalStorage()
@@ -303,5 +355,19 @@ onMounted(() => {
 .q-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

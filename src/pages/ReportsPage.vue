@@ -1,193 +1,200 @@
 <template>
   <q-page class="reports-page">
-    <!-- Header -->
-    <div class="page-header q-pa-md">
-      <div class="row items-center justify-between">
-        <div>
-          <h4 class="text-h4 text-weight-bold q-ma-none">Reports</h4>
-          <p class="text-subtitle1 text-grey-6 q-ma-none">Financial insights and analytics</p>
-        </div>
-        <div class="row q-gutter-sm">
-          <q-btn color="primary" icon="download" label="Export PDF" @click="exportToPDF" />
-          <q-btn color="secondary" icon="table_chart" label="Export CSV" @click="exportToCSV" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Date Range Selector -->
-    <div class="q-pa-md">
-      <q-card>
-        <q-card-section>
-          <div class="row q-col-gutter-md items-center">
-            <div class="col-12 col-md-3">
-              <q-select v-model="selectedPeriod" :options="periodOptions" label="Time Period" outlined emit-value
-                map-options @update:model-value="updateDateRange" />
-            </div>
-            <div class="col-12 col-md-3">
-              <q-input v-model="customStartDate" label="Start Date" type="date" outlined
-                :disable="selectedPeriod !== 'custom'" />
-            </div>
-            <div class="col-12 col-md-3">
-              <q-input v-model="customEndDate" label="End Date" type="date" outlined
-                :disable="selectedPeriod !== 'custom'" />
-            </div>
-            <div class="col-12 col-md-3">
-              <q-btn color="primary" label="Update Report" @click="updateReport" class="full-width" />
-            </div>
+    <!-- Pull to Refresh -->
+    <q-pull-to-refresh @refresh="onRefresh">
+      <!-- Header -->
+      <div class="page-header q-pa-md">
+        <div class="row items-center justify-between">
+          <div>
+            <h4 class="text-h4 text-weight-bold q-ma-none">Reports</h4>
+            <p class="text-subtitle1 text-grey-6 q-ma-none">
+              Financial insights and analytics
+              <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
+              <span v-else class="text-white q-ml-xs">• Live</span>
+            </p>
           </div>
-        </q-card-section>
-      </q-card>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="q-pa-md">
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-3">
-          <q-card class="summary-card">
-            <q-card-section class="text-center">
-              <q-icon name="trending_up" size="2rem" color="positive" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold text-positive">{{ formatCurrency(periodIncome) }}</div>
-              <div class="text-caption text-grey-6">Total Income</div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <div class="col-12 col-md-3">
-          <q-card class="summary-card">
-            <q-card-section class="text-center">
-              <q-icon name="trending_down" size="2rem" color="negative" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold text-negative">{{ formatCurrency(periodExpenses) }}
-              </div>
-              <div class="text-caption text-grey-6">Total Expenses</div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <div class="col-12 col-md-3">
-          <q-card class="summary-card">
-            <q-card-section class="text-center">
-              <q-icon name="account_balance" size="2rem" color="primary" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold"
-                :class="(periodIncome - periodExpenses) >= 0 ? 'text-positive' : 'text-negative'">
-                {{ formatCurrency(periodIncome - periodExpenses) }}
-              </div>
-              <div class="text-caption text-grey-6">Net Income</div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <div class="col-12 col-md-3">
-          <q-card class="summary-card">
-            <q-card-section class="text-center">
-              <q-icon name="percent" size="2rem" color="info" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold text-info">{{ savingsRate }}%</div>
-              <div class="text-caption text-grey-6">Savings Rate</div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="q-pa-md">
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-lg-6">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Income vs Expenses Trend</div>
-              <div class="chart-container">
-                <LineChart :data="trendChartData" :options="trendChartOptions" />
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <div class="col-12 col-lg-6">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Expenses by Category</div>
-              <div class="chart-container">
-                <DoughnutChart :data="categoryChartData" :options="categoryChartOptions" />
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-    </div>
-
-    <!-- Detailed Breakdown -->
-    <div class="q-pa-md">
-      <div class="row q-col-gutter-md">
-        <!-- Income Breakdown -->
-        <div class="col-12 col-lg-6">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Income Breakdown</div>
-              <div v-if="incomeByCategory.length === 0" class="text-center text-grey-6 q-py-lg">
-                No income data for this period
-              </div>
-              <div v-else>
-                <q-list>
-                  <q-item v-for="item in incomeByCategory" :key="item.category" class="q-px-none">
-                    <q-item-section>
-                      <q-item-label>{{ item.category }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-item-label class="text-weight-bold text-positive">
-                        {{ formatCurrency(item.amount) }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <!-- Expense Breakdown -->
-        <div class="col-12 col-lg-6">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Expense Breakdown</div>
-              <div v-if="expensesByCategory.length === 0" class="text-center text-grey-6 q-py-lg">
-                No expense data for this period
-              </div>
-              <div v-else>
-                <q-list>
-                  <q-item v-for="item in expensesByCategory" :key="item.category" class="q-px-none">
-                    <q-item-section>
-                      <q-item-label>{{ item.category }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-item-label class="text-weight-bold text-negative">
-                        {{ formatCurrency(item.amount) }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-    </div>
-
-    <!-- Monthly Comparison -->
-    <div class="q-pa-md" v-if="monthlyData.length > 1">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Monthly Comparison</div>
-          <div class="chart-container">
-            <BarChart :data="monthlyComparisonData" :options="monthlyComparisonOptions" />
+          <div class="row q-gutter-sm">
+            <q-btn color="primary" icon="download" label="Export PDF" @click="exportToPDF" />
+            <q-btn color="secondary" icon="table_chart" label="Export CSV" @click="exportToCSV" />
           </div>
-        </q-card-section>
-      </q-card>
-    </div>
+        </div>
+      </div>
+
+      <!-- Date Range Selector -->
+      <div class="q-pa-md">
+        <q-card>
+          <q-card-section>
+            <div class="row q-col-gutter-md items-center">
+              <div class="col-12 col-md-3">
+                <q-select v-model="selectedPeriod" :options="periodOptions" label="Time Period" outlined emit-value
+                  map-options @update:model-value="updateDateRange" />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-input v-model="customStartDate" label="Start Date" type="date" outlined
+                  :disable="selectedPeriod !== 'custom'" />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-input v-model="customEndDate" label="End Date" type="date" outlined
+                  :disable="selectedPeriod !== 'custom'" />
+              </div>
+              <div class="col-12 col-md-3">
+                <q-btn color="primary" label="Update Report" @click="updateReport" class="full-width" />
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="q-pa-md">
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-md-3">
+            <q-card class="summary-card">
+              <q-card-section class="text-center">
+                <q-icon name="trending_up" size="2rem" color="positive" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold text-positive">{{ formatCurrency(periodIncome) }}</div>
+                <div class="text-caption text-grey-6">Total Income</div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <q-card class="summary-card">
+              <q-card-section class="text-center">
+                <q-icon name="trending_down" size="2rem" color="negative" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold text-negative">{{ formatCurrency(periodExpenses) }}
+                </div>
+                <div class="text-caption text-grey-6">Total Expenses</div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <q-card class="summary-card">
+              <q-card-section class="text-center">
+                <q-icon name="account_balance" size="2rem" color="primary" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold"
+                  :class="(periodIncome - periodExpenses) >= 0 ? 'text-positive' : 'text-negative'">
+                  {{ formatCurrency(periodIncome - periodExpenses) }}
+                </div>
+                <div class="text-caption text-grey-6">Net Income</div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <q-card class="summary-card">
+              <q-card-section class="text-center">
+                <q-icon name="percent" size="2rem" color="info" class="q-mb-sm" />
+                <div class="text-h6 text-weight-bold text-info">{{ savingsRate }}%</div>
+                <div class="text-caption text-grey-6">Savings Rate</div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="q-pa-md">
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-lg-6">
+            <q-card>
+              <q-card-section>
+                <div class="text-h6 q-mb-md">Income vs Expenses Trend</div>
+                <div class="chart-container">
+                  <LineChart :data="trendChartData" :options="trendChartOptions" />
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <q-card>
+              <q-card-section>
+                <div class="text-h6 q-mb-md">Expenses by Category</div>
+                <div class="chart-container">
+                  <DoughnutChart :data="categoryChartData" :options="categoryChartOptions" />
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Breakdown -->
+      <div class="q-pa-md">
+        <div class="row q-col-gutter-md">
+          <!-- Income Breakdown -->
+          <div class="col-12 col-lg-6">
+            <q-card>
+              <q-card-section>
+                <div class="text-h6 q-mb-md">Income Breakdown</div>
+                <div v-if="incomeByCategory.length === 0" class="text-center text-grey-6 q-py-lg">
+                  No income data for this period
+                </div>
+                <div v-else>
+                  <q-list>
+                    <q-item v-for="item in incomeByCategory" :key="item.category" class="q-px-none">
+                      <q-item-section>
+                        <q-item-label>{{ item.category }}</q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-item-label class="text-weight-bold text-positive">
+                          {{ formatCurrency(item.amount) }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+
+          <!-- Expense Breakdown -->
+          <div class="col-12 col-lg-6">
+            <q-card>
+              <q-card-section>
+                <div class="text-h6 q-mb-md">Expense Breakdown</div>
+                <div v-if="expensesByCategory.length === 0" class="text-center text-grey-6 q-py-lg">
+                  No expense data for this period
+                </div>
+                <div v-else>
+                  <q-list>
+                    <q-item v-for="item in expensesByCategory" :key="item.category" class="q-px-none">
+                      <q-item-section>
+                        <q-item-label>{{ item.category }}</q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-item-label class="text-weight-bold text-negative">
+                          {{ formatCurrency(item.amount) }}
+                        </q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Comparison -->
+      <div class="q-pa-md" v-if="monthlyData.length > 1">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6 q-mb-md">Monthly Comparison</div>
+            <div class="chart-container">
+              <BarChart :data="monthlyComparisonData" :options="monthlyComparisonOptions" />
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </q-pull-to-refresh>
   </q-page>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency } from 'src/utils/formatters'
 import { Line as LineChart, Doughnut as DoughnutChart, Bar as BarChart } from 'vue-chartjs'
@@ -217,6 +224,11 @@ const customStartDate = ref('')
 const customEndDate = ref('')
 const startDate = ref('')
 const endDate = ref('')
+
+// Live page state
+const isRefreshing = ref(false)
+const lastUpdateTime = ref(new Date())
+const refreshKey = ref(0)
 
 const periodOptions = [
   { label: 'This Month', value: 'thisMonth' },
@@ -491,7 +503,6 @@ const updateReport = () => {
 
 const exportToPDF = () => {
   // TODO: Implement PDF export
-  console.log('Export to PDF')
 }
 
 const exportToCSV = () => {
@@ -516,6 +527,35 @@ const exportToCSV = () => {
   a.click()
   window.URL.revokeObjectURL(url)
 }
+
+// Live page methods
+const triggerPageRefresh = async () => {
+  isRefreshing.value = true
+  lastUpdateTime.value = new Date()
+  refreshKey.value++
+
+  // Force re-computation of all data
+  await nextTick()
+
+  // Small delay to show refresh indicator
+  setTimeout(() => {
+    isRefreshing.value = false
+  }, 500)
+}
+
+const onRefresh = async (done) => {
+  await triggerPageRefresh()
+  done()
+}
+
+// Watch for changes in financial data
+watch(() => financialStore.transactions, () => {
+  triggerPageRefresh()
+}, { deep: true })
+
+watch(() => financialStore.goals, () => {
+  triggerPageRefresh()
+}, { deep: true })
 
 onMounted(() => {
   financialStore.loadFromLocalStorage()
@@ -550,5 +590,19 @@ onMounted(() => {
 .q-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

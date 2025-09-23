@@ -421,7 +421,6 @@ const showSaveScenarioDialog = () => {
 const saveScenario = () => {
   if (scenarioName.value) {
     // TODO: Implement scenario saving
-    console.log('Saving scenario:', scenarioName.value, scenarios.value)
     showSaveDialog.value = false
   }
 }
