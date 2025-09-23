@@ -161,7 +161,7 @@ export const useFinancialStore = defineStore('financial', () => {
     const newGoal = {
       id: Date.now(),
       ...goal,
-      currentAmount: 0,
+      currentAmount: goal.currentAmount || 0,
       createdAt: new Date().toISOString(),
     }
     goals.value.push(newGoal)

@@ -13,7 +13,7 @@
 
     <!-- Goals Overview Cards -->
     <div class="q-pa-md">
-      <div class="row q-gutter-md">
+      <div class="row q-col-gutter-md">
         <div class="col-12 col-md-4">
           <q-card class="overview-card">
             <q-card-section class="text-center">
@@ -58,7 +58,7 @@
             <div class="text-body2">Create your first savings goal to get started</div>
           </div>
 
-          <div v-else class="row q-gutter-md">
+          <div v-else class="row q-col-gutter-md">
             <div v-for="goal in goals" :key="goal.id" class="col-12 col-md-6 col-lg-4">
               <q-card class="goal-card" :class="{
                 'goal-completed': isGoalCompleted(goal),
@@ -114,7 +114,7 @@
           </div>
         </q-card-section>
         <q-card-section>
-          <q-form @submit="saveGoal" class="q-gutter-md">
+          <q-form @submit="saveGoal" class="q-col-gutter-md">
             <q-input v-model="goalForm.name" label="Goal Name" outlined
               :rules="[val => !!val || 'Goal name is required']" />
             <q-input v-model.number="goalForm.targetAmount" label="Target Amount" type="number" step="0.01" outlined
@@ -139,7 +139,7 @@
           <div class="text-subtitle2 text-grey-6">{{ selectedGoal?.name }}</div>
         </q-card-section>
         <q-card-section>
-          <q-form @submit="addMoneyToGoal" class="q-gutter-md">
+          <q-form @submit="addMoneyToGoal" class="q-col-gutter-md">
             <q-input v-model.number="addMoneyForm.amount" label="Amount to Add" type="number" step="0.01" outlined
               :rules="[val => val > 0 || 'Amount must be greater than 0']" />
             <q-input v-model="addMoneyForm.notes" label="Notes (optional)" outlined type="textarea" rows="2" />

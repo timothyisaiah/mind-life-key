@@ -18,9 +18,9 @@
 
     <!-- Notifications Section -->
     <div class="q-pa-md" v-if="overdueBills.length > 0 || upcomingBills.length > 0">
-      <div class="row q-gutter-md">
+      <div class="row q-col-gutter-md">
         <!-- Overdue Bills Alert -->
-        <div class="col-12 col-md-6" v-if="overdueBills.length > 0">
+        <div class="col-12 col-sm-6" v-if="overdueBills.length > 0">
           <q-card class="notification-card overdue">
             <q-card-section>
               <div class="text-h6 text-negative q-mb-md">
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Upcoming Bills Alert -->
-        <div class="col-12 col-md-6" v-if="upcomingBills.length > 0">
+        <div class="col-12 col-sm-6" v-if="upcomingBills.length > 0">
           <q-card class="notification-card upcoming">
             <q-card-section>
               <div class="text-h6 text-warning q-mb-md">
@@ -82,8 +82,8 @@
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="row q-pa-md q-gutter-md">
-      <div class="col-12 col-md-4">
+    <div class="row q-col-gutter-md q-pa-md">
+      <div class="col-12 col-sm-4">
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="trending_up" size="2rem" color="positive" class="q-mb-sm" />
@@ -93,7 +93,7 @@
         </q-card>
       </div>
 
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-sm-4">
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="trending_down" size="2rem" color="negative" class="q-mb-sm" />
@@ -103,7 +103,7 @@
         </q-card>
       </div>
 
-      <div class="col-12 col-md-4">
+      <div class="col-12 col-sm-4">
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="account_balance" size="2rem" color="primary" class="q-mb-sm" />
@@ -118,11 +118,11 @@
     </div>
 
     <!-- Charts Section -->
-    <div class="row q-pa-md q-gutter-md">
-      <div class="col-12 col-lg-6">
+    <div class="row q-col-gutter-md q-pa-md">
+      <div class="col-12 col-md-6">
         <ExpenseChart :expenses="expensesByCategory" />
       </div>
-      <div class="col-12 col-lg-6">
+      <div class="col-12 col-md-6">
         <BalanceChart :transactions="transactions" :starting-balance="userSettings.startingBalance" />
       </div>
     </div>
@@ -131,7 +131,7 @@
     <div class="q-pa-md">
       <q-card>
         <q-card-section>
-          <div class="row items-center justify-between q-mb-md">
+          <div class="row q-col-gutter-md items-center justify-between q-mb-md">
             <div class="text-h6">6-Month Cash Flow Forecast</div>
             <q-btn flat color="primary" label="View Full Forecast" :to="{ name: 'forecaster' }" icon="arrow_forward" />
           </div>
@@ -141,7 +141,7 @@
             <div class="text-body2">Set up recurring transactions to see cash flow projections</div>
           </div>
           <div v-else>
-            <div class="row q-gutter-md">
+            <div class="row q-col-gutter-md">
               <div class="col-12 col-md-3" v-for="month in forecastPreview" :key="month.month">
                 <q-card flat bordered>
                   <q-card-section class="text-center">
@@ -171,7 +171,7 @@
             <div class="text-h6 q-mb-sm">No transactions yet</div>
             <div class="text-body2 q-mb-md">Get started by adding your first transaction or load demo data to explore
               the app</div>
-            <div class="row q-gutter-sm justify-center">
+            <div class="row q-col-gutter-md justify-center">
               <q-btn color="primary" label="Add Transaction" :to="{ name: 'transactions' }" icon="add" />
               <q-btn color="secondary" label="Load Demo Data" @click="loadDemoDataHandler" icon="play_arrow" />
             </div>
@@ -211,8 +211,8 @@
       <q-card>
         <q-card-section>
           <div class="text-h6 q-mb-md">Savings Goals</div>
-          <div class="row q-gutter-md">
-            <div v-for="goal in activeGoals" :key="goal.id" class="col-12 col-md-6">
+          <div class="row q-col-gutter-md">
+            <div v-for="goal in activeGoals" :key="goal.id" class="col-6 col-md-4 col-lg-3 col-sm-6">
               <q-card flat bordered>
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold">{{ goal.name }}</div>
@@ -230,7 +230,7 @@
             </div>
           </div>
           <div class="text-center q-mt-md">
-            <div class="row q-gutter-sm justify-center">
+            <div class="row q-col-gutter-md justify-center">
               <q-btn flat color="primary" label="Manage Goals" :to="{ name: 'goals' }" icon="flag" />
               <q-btn flat color="orange" label="Enhanced Goals" :to="{ name: 'enhanced-goals' }" icon="emoji_events" />
             </div>
@@ -247,7 +247,7 @@
             <div class="text-h6">Recent Achievements</div>
             <q-btn flat color="orange" label="View All" :to="{ name: 'enhanced-goals' }" icon="arrow_forward" />
           </div>
-          <div class="row q-gutter-md">
+          <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4" v-for="achievement in recentAchievements" :key="achievement.id">
               <q-card flat bordered class="achievement-widget">
                 <q-card-section class="text-center">
@@ -273,7 +273,7 @@
             <div class="text-h6">Important Notifications</div>
             <q-btn flat color="indigo" label="View All" :to="{ name: 'notifications' }" icon="arrow_forward" />
           </div>
-          <div class="row q-gutter-md">
+          <div class="row q-col-gutter-md">
             <div class="col-12" v-for="notification in highPriorityNotifications.slice(0, 3)" :key="notification.id">
               <q-banner :class="`bg-${notification.color}-1 text-${notification.color}`" rounded
                 class="notification-banner">
@@ -301,7 +301,7 @@
             <div class="text-h6">Financial Trends</div>
             <q-btn flat color="teal" label="View Full Report" :to="{ name: 'advanced-reports' }" icon="arrow_forward" />
           </div>
-          <div class="row q-gutter-md">
+          <div class="row q-col-gutter-md">
             <div class="col-12 col-md-4">
               <q-card flat bordered class="trend-widget">
                 <q-card-section class="text-center">
@@ -351,53 +351,29 @@
       </q-card>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="q-pa-md">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Quick Actions</div>
-          <div class="row q-gutter-md">
-            <div class="col-6 col-md-3">
-              <q-btn color="primary" icon="add" label="Add Income" class="full-width"
-                @click="showAddTransactionDialog('income')" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="negative" icon="remove" label="Add Expense" class="full-width"
-                @click="showAddTransactionDialog('expense')" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="secondary" icon="flag" label="New Goal" class="full-width" @click="showAddGoalDialog" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="info" icon="assessment" label="Reports" class="full-width" :to="{ name: 'reports' }" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="accent" icon="repeat" label="Recurring" class="full-width" :to="{ name: 'recurring' }" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="purple" icon="trending_up" label="Forecaster" class="full-width"
-                :to="{ name: 'forecaster' }" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="orange" icon="emoji_events" label="Enhanced Goals" class="full-width"
-                :to="{ name: 'enhanced-goals' }" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="teal" icon="analytics" label="Advanced Reports" class="full-width"
-                :to="{ name: 'advanced-reports' }" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-btn color="indigo" icon="notifications" label="Notifications" class="full-width"
-                :to="{ name: 'notifications' }">
-                <q-badge v-if="unreadNotificationsCount > 0" color="negative" floating>
-                  {{ unreadNotificationsCount }}
-                </q-badge>
-              </q-btn>
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
+    <!-- Floating Action Button -->
+    <q-page-sticky position="bottom-right" :offset="[18, 18]">
+      <q-fab v-model="fabExpanded" vertical-actions-align="right" color="primary" icon="add" direction="up"
+        :hide-icon="false">
+        <q-fab-action color="negative" icon="remove" label="Add Expense" @click="showAddTransactionDialog('expense')" />
+        <q-fab-action color="positive" icon="add" label="Add Income" @click="showAddTransactionDialog('income')" />
+        <q-fab-action color="secondary" icon="flag" label="New Goal" @click="showAddGoalDialog" />
+        <q-fab-action color="info" icon="assessment" label="Reports" @click="$router.push({ name: 'reports' })" />
+        <q-fab-action color="accent" icon="repeat" label="Recurring" @click="$router.push({ name: 'recurring' })" />
+        <q-fab-action color="purple" icon="trending_up" label="Forecaster"
+          @click="$router.push({ name: 'forecaster' })" />
+        <q-fab-action color="orange" icon="emoji_events" label="Enhanced Goals"
+          @click="$router.push({ name: 'enhanced-goals' })" />
+        <q-fab-action color="teal" icon="analytics" label="Advanced Reports"
+          @click="$router.push({ name: 'advanced-reports' })" />
+        <q-fab-action color="indigo" icon="notifications" label="Notifications"
+          @click="$router.push({ name: 'notifications' })">
+          <q-badge v-if="unreadNotificationsCount > 0" color="negative" floating>
+            {{ unreadNotificationsCount }}
+          </q-badge>
+        </q-fab-action>
+      </q-fab>
+    </q-page-sticky>
 
     <!-- Add Transaction Dialog -->
     <q-dialog v-model="showTransactionDialog" persistent>
@@ -406,7 +382,7 @@
           <div class="text-h6">{{ transactionDialogType === 'income' ? 'Add Income' : 'Add Expense' }}</div>
         </q-card-section>
         <q-card-section>
-          <q-form @submit="addTransaction" class="q-gutter-md">
+          <q-form @submit="addTransaction" class="q-col-gutter-md">
             <q-input v-model="newTransaction.description" label="Description" outlined
               :rules="[val => !!val || 'Description is required']" />
             <q-input v-model.number="newTransaction.amount" label="Amount" type="number" step="0.01" outlined
@@ -430,7 +406,7 @@
           <div class="text-h6">Create New Goal</div>
         </q-card-section>
         <q-card-section>
-          <q-form @submit="addGoal" class="q-gutter-md">
+          <q-form @submit="addGoal" class="q-col-gutter-md">
             <q-input v-model="newGoal.name" label="Goal Name" outlined
               :rules="[val => !!val || 'Goal name is required']" />
             <q-input v-model.number="newGoal.targetAmount" label="Target Amount" type="number" step="0.01" outlined
@@ -520,6 +496,7 @@ const categoryOptions = computed(() => {
 const showTransactionDialog = ref(false)
 const showGoalDialog = ref(false)
 const transactionDialogType = ref('expense')
+const fabExpanded = ref(false)
 
 // Form data
 const newTransaction = ref({

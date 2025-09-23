@@ -3,12 +3,12 @@ export const generateDemoData = () => {
   const today = new Date()
 
   const demoTransactions = [
-    // Income
+    // Income - spread across the last 30 days
     {
       description: 'Salary',
       amount: 3500,
       categoryId: 7, // Salary
-      date: new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'income',
       notes: 'Monthly salary',
     },
@@ -16,17 +16,17 @@ export const generateDemoData = () => {
       description: 'Freelance Project',
       amount: 800,
       categoryId: 8, // Freelance
-      date: new Date(today.getFullYear(), today.getMonth(), 15).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'income',
       notes: 'Web development project',
     },
 
-    // Expenses
+    // Expenses - spread across the last 30 days
     {
       description: 'Rent',
       amount: 1200,
       categoryId: 3, // Housing
-      date: new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Monthly rent payment',
     },
@@ -34,7 +34,7 @@ export const generateDemoData = () => {
       description: 'Grocery Shopping',
       amount: 150,
       categoryId: 1, // Food & Dining
-      date: new Date(today.getFullYear(), today.getMonth(), 2).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 24 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Weekly groceries',
     },
@@ -42,7 +42,7 @@ export const generateDemoData = () => {
       description: 'Gas',
       amount: 60,
       categoryId: 2, // Transportation
-      date: new Date(today.getFullYear(), today.getMonth(), 3).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 23 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Car fuel',
     },
@@ -50,7 +50,7 @@ export const generateDemoData = () => {
       description: 'Netflix Subscription',
       amount: 15,
       categoryId: 4, // Entertainment
-      date: new Date(today.getFullYear(), today.getMonth(), 5).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Monthly subscription',
     },
@@ -58,7 +58,7 @@ export const generateDemoData = () => {
       description: 'Restaurant Dinner',
       amount: 45,
       categoryId: 1, // Food & Dining
-      date: new Date(today.getFullYear(), today.getMonth(), 8).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 18 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Date night dinner',
     },
@@ -66,7 +66,7 @@ export const generateDemoData = () => {
       description: 'Gym Membership',
       amount: 50,
       categoryId: 5, // Healthcare
-      date: new Date(today.getFullYear(), today.getMonth(), 10).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 16 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Monthly gym fee',
     },
@@ -74,7 +74,7 @@ export const generateDemoData = () => {
       description: 'Coffee',
       amount: 25,
       categoryId: 1, // Food & Dining
-      date: new Date(today.getFullYear(), today.getMonth(), 12).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Weekly coffee runs',
     },
@@ -82,7 +82,7 @@ export const generateDemoData = () => {
       description: 'Online Shopping',
       amount: 120,
       categoryId: 6, // Shopping
-      date: new Date(today.getFullYear(), today.getMonth(), 14).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'New clothes',
     },
@@ -90,7 +90,7 @@ export const generateDemoData = () => {
       description: 'Utilities',
       amount: 180,
       categoryId: 3, // Housing
-      date: new Date(today.getFullYear(), today.getMonth(), 16).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Electricity and water',
     },
@@ -98,7 +98,7 @@ export const generateDemoData = () => {
       description: 'Movie Tickets',
       amount: 30,
       categoryId: 4, // Entertainment
-      date: new Date(today.getFullYear(), today.getMonth(), 18).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Weekend movie',
     },
@@ -106,7 +106,7 @@ export const generateDemoData = () => {
       description: 'Grocery Shopping',
       amount: 140,
       categoryId: 1, // Food & Dining
-      date: new Date(today.getFullYear(), today.getMonth(), 20).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Weekly groceries',
     },
@@ -114,7 +114,7 @@ export const generateDemoData = () => {
       description: 'Uber Ride',
       amount: 15,
       categoryId: 2, // Transportation
-      date: new Date(today.getFullYear(), today.getMonth(), 22).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Airport pickup',
     },
@@ -122,9 +122,17 @@ export const generateDemoData = () => {
       description: 'Pharmacy',
       amount: 35,
       categoryId: 5, // Healthcare
-      date: new Date(today.getFullYear(), today.getMonth(), 25).toISOString().split('T')[0],
+      date: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Prescription medication',
+    },
+    {
+      description: 'Coffee',
+      amount: 20,
+      categoryId: 1, // Food & Dining
+      date: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      type: 'expense',
+      notes: 'Morning coffee',
     },
   ]
 
