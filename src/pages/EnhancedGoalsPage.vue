@@ -343,6 +343,7 @@ const addMoneyToSelectedGoal = () => {
   }
 }
 
+// eslint-disable-next-line no-unused-vars
 const editGoal = (goal) => {
   // TODO: Implement edit functionality
 }
