@@ -1,6 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated class="bg-primary text-white">
+    <q-header elevated class="theme-navigation">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
@@ -10,6 +10,7 @@
         </q-toolbar-title>
 
         <div class="row items-center q-gutter-sm">
+          <ThemeToggle />
           <q-btn flat round icon="notifications" :to="{ name: 'notifications' }">
             <q-badge v-if="unreadNotificationsCount > 0" color="negative" floating>
               {{ unreadNotificationsCount }}
@@ -21,9 +22,9 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-1">
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-theme-surface">
       <q-list>
-        <q-item-label header class="text-grey-8">
+        <q-item-label header class="text-theme-secondary">
           <q-icon name="dashboard" class="q-mr-sm" />
           Navigation
         </q-item-label>
@@ -42,14 +43,14 @@
 
         <q-separator class="q-my-md" />
 
-        <q-item-label header class="text-grey-8">
+        <q-item-label header class="text-theme-secondary">
           <q-icon name="assessment" class="q-mr-sm" />
           Quick Stats
         </q-item-label>
 
         <q-item>
           <q-item-section>
-            <q-item-label class="text-weight-bold text-positive">
+            <q-item-label class="text-weight-bold text-profit">
               {{ formatCurrency(monthlyIncome) }}
             </q-item-label>
             <q-item-label caption>Monthly Income</q-item-label>
@@ -58,7 +59,7 @@
 
         <q-item>
           <q-item-section>
-            <q-item-label class="text-weight-bold text-negative">
+            <q-item-label class="text-weight-bold text-loss">
               {{ formatCurrency(monthlyExpenses) }}
             </q-item-label>
             <q-item-label caption>Monthly Expenses</q-item-label>
@@ -68,7 +69,7 @@
         <q-item>
           <q-item-section>
             <q-item-label class="text-weight-bold"
-              :class="(monthlyIncome - monthlyExpenses) >= 0 ? 'text-positive' : 'text-negative'">
+              :class="(monthlyIncome - monthlyExpenses) >= 0 ? 'text-profit' : 'text-loss'">
               {{ formatCurrency(monthlyIncome - monthlyExpenses) }}
             </q-item-label>
             <q-item-label caption>Monthly Balance</q-item-label>
@@ -84,13 +85,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
 import { useAuthStore } from 'src/stores/auth'
+import { useThemeStore } from 'src/stores/theme'
 import { formatCurrency } from 'src/utils/formatters'
+import ThemeToggle from 'src/components/ThemeToggle.vue'
 
 const financialStore = useFinancialStore()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 const navigationLinks = [
   {
@@ -171,6 +175,11 @@ function toggleLeftDrawer() {
 function logout() {
   authStore.logout()
 }
+
+// Initialize theme on component mount
+onMounted(() => {
+  themeStore.initializeTheme()
+})
 </script>
 
 <style scoped>

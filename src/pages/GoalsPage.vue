@@ -7,7 +7,7 @@
         <div class="row items-center justify-between">
           <div>
             <h4 class="text-h4 text-weight-bold q-ma-none">Savings Goals</h4>
-            <p class="text-subtitle1 text-grey-6 q-ma-none">
+            <p class="text-subtitle1 text-theme-secondary q-ma-none">
               Track your financial goals and milestones
               <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
               <span v-else class="text-white q-ml-xs">• Live</span>
@@ -25,7 +25,7 @@
               <q-card-section class="text-center">
                 <q-icon name="flag" size="2rem" color="primary" class="q-mb-sm" />
                 <div class="text-h6 text-weight-bold">{{ goals.length }}</div>
-                <div class="text-caption text-grey-6">Total Goals</div>
+                <div class="text-caption text-theme-secondary">Total Goals</div>
               </q-card-section>
             </q-card>
           </div>
@@ -35,7 +35,7 @@
               <q-card-section class="text-center">
                 <q-icon name="check_circle" size="2rem" color="positive" class="q-mb-sm" />
                 <div class="text-h6 text-weight-bold">{{ completedGoals.length }}</div>
-                <div class="text-caption text-grey-6">Completed</div>
+                <div class="text-caption text-theme-secondary">Completed</div>
               </q-card-section>
             </q-card>
           </div>
@@ -45,7 +45,7 @@
               <q-card-section class="text-center">
                 <q-icon name="schedule" size="2rem" color="warning" class="q-mb-sm" />
                 <div class="text-h6 text-weight-bold">{{ activeGoals.length }}</div>
-                <div class="text-caption text-grey-6">In Progress</div>
+                <div class="text-caption text-theme-secondary">In Progress</div>
               </q-card-section>
             </q-card>
           </div>
@@ -58,7 +58,7 @@
           <q-card-section>
             <div class="text-h6 q-mb-md">Your Goals</div>
 
-            <div v-if="goals.length === 0" class="text-center text-grey-6 q-py-xl">
+            <div v-if="goals.length === 0" class="text-center text-theme-secondary q-py-xl">
               <q-icon name="flag" size="4rem" class="q-mb-md" />
               <div class="text-h6">No goals yet</div>
               <div class="text-body2">Create your first savings goal to get started</div>
@@ -79,7 +79,7 @@
                       </q-btn-group>
                     </div>
 
-                    <div class="text-caption text-grey-6 q-mb-sm">
+                    <div class="text-caption text-theme-secondary q-mb-sm">
                       Target: {{ formatCurrency(goal.targetAmount) }} by {{ formatDate(goal.targetDate) }}
                     </div>
 
@@ -95,7 +95,7 @@
                       </div>
                     </div>
 
-                    <div v-if="goal.description" class="text-caption text-grey-6 q-mt-sm">
+                    <div v-if="goal.description" class="text-caption text-theme-secondary q-mt-sm">
                       {{ goal.description }}
                     </div>
 
@@ -143,7 +143,7 @@
         <q-card style="min-width: 400px">
           <q-card-section>
             <div class="text-h6">Add Money to Goal</div>
-            <div class="text-subtitle2 text-grey-6">{{ selectedGoal?.name }}</div>
+            <div class="text-subtitle2 text-theme-secondary">{{ selectedGoal?.name }}</div>
           </q-card-section>
           <q-card-section>
             <q-form @submit="addMoneyToGoal" class="q-col-gutter-md">
@@ -373,12 +373,13 @@ onMounted(() => {
 
 <style scoped>
 .goals-page {
-  background-color: #f5f5f5;
+  background-color: var(--q-background);
   min-height: 100vh;
+  color: var(--q-text-primary);
 }
 
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
   color: white;
 }
 
@@ -400,16 +401,18 @@ onMounted(() => {
 }
 
 .goal-completed {
-  border-left: 4px solid #4CAF50;
+  border-left: 4px solid var(--q-profit);
 }
 
 .goal-overdue {
-  border-left: 4px solid #F44336;
+  border-left: 4px solid var(--q-loss);
 }
 
 .q-card {
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--q-shadow);
+  background-color: var(--q-surface);
+  color: var(--q-text-primary);
 }
 
 .animate-spin {

@@ -12,14 +12,23 @@
 // to match your app's branding.
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
-$primary: #1976d2;
-$secondary: #26a69a;
-$accent: #9c27b0;
+// Light Mode Colors (Default)
+$primary: #1e3a8a; // Navy Blue
+$secondary: #10b981; // Emerald Green
+$accent: #f59e0b; // Amber Gold
 
-$dark: #1d1d1d;
-$dark-page: #121212;
+$dark: #0f172a; // Deep Navy
+$dark-page: #0f172a; // Dark Navy / Near Black
 
-$positive: #21ba45;
-$negative: #c10015;
-$info: #31ccec;
-$warning: #f2c037;
+$positive: #059669; // Deep Emerald
+$negative: #dc2626; // Muted Red
+$info: #10b981; // Emerald Green
+$warning: #f59e0b; // Amber Gold
+
+// Custom theme variables
+$background: #f9fafb; // Light Gray / Off-White
+$surface: #ffffff; // Pure White
+$text-primary: #111827; // Near Black
+$text-secondary: #6b7280; // Muted Gray
+$profit: #059669; // Deep Emerald
+$loss: #dc2626; // Muted Red

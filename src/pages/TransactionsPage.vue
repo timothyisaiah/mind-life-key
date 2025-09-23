@@ -7,7 +7,7 @@
         <div class="row items-center justify-between">
           <div>
             <h4 class="text-h4 text-weight-bold q-ma-none">Transactions</h4>
-            <p class="text-subtitle1 text-grey-6 q-ma-none">
+            <p class="text-subtitle1 text-theme-secondary q-ma-none">
               Manage your income and expenses
               <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
               <span v-else class="text-white q-ml-xs">• Live</span>
@@ -53,7 +53,7 @@
               Transactions ({{ filteredTransactions.length }})
             </div>
 
-            <div v-if="filteredTransactions.length === 0" class="text-center text-grey-6 q-py-xl">
+            <div v-if="filteredTransactions.length === 0" class="text-center text-theme-secondary q-py-xl">
               <q-icon name="receipt_long" size="4rem" class="q-mb-md" />
               <div class="text-h6">No transactions found</div>
               <div class="text-body2">Add your first transaction to get started</div>
@@ -335,12 +335,13 @@ onMounted(() => {
 
 <style scoped>
 .transactions-page {
-  background-color: #f5f5f5;
+  background-color: var(--q-background);
   min-height: 100vh;
+  color: var(--q-text-primary);
 }
 
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
   color: white;
 }
 
@@ -349,12 +350,14 @@ onMounted(() => {
 }
 
 .transaction-item:hover {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: var(--q-hover);
 }
 
 .q-card {
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--q-shadow);
+  background-color: var(--q-surface);
+  color: var(--q-text-primary);
 }
 
 .animate-spin {

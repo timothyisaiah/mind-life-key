@@ -1,1 +1,259 @@
 // app global css in SCSS form
+
+// Import Quasar variables
+@import 'quasar.variables';
+
+// CSS Custom Properties for Dynamic Theming
+:root {
+  // Light Mode (Default)
+  --q-primary: #{$primary};
+  --q-secondary: #{$secondary};
+  --q-accent: #{$accent};
+  --q-background: #{$background};
+  --q-surface: #{$surface};
+  --q-text-primary: #{$text-primary};
+  --q-text-secondary: #{$text-secondary};
+  --q-profit: #{$profit};
+  --q-loss: #{$loss};
+  --q-success: #{$positive};
+  --q-error: #{$negative};
+  --q-warning: #{$warning};
+  --q-info: #{$info};
+
+  // Additional theme variables
+  --q-border: rgba(0, 0, 0, 0.12);
+  --q-shadow: rgba(0, 0, 0, 0.1);
+  --q-hover: rgba(0, 0, 0, 0.04);
+}
+
+// Dark Mode Theme
+.theme-dark {
+  --q-primary: #0f172a; // Deep Navy
+  --q-secondary: #14b8a6; // Teal
+  --q-accent: #fbbf24; // Warm Amber
+  --q-background: #0f172a; // Dark Navy / Near Black
+  --q-surface: #1e293b; // Slate Gray
+  --q-text-primary: #f9fafb; // Near White
+  --q-text-secondary: #9ca3af; // Cool Gray
+  --q-profit: #34d399; // Bright Green
+  --q-loss: #f87171; // Soft Red
+  --q-success: #34d399;
+  --q-error: #f87171;
+  --q-warning: #fbbf24;
+  --q-info: #14b8a6;
+
+  // Additional dark theme variables
+  --q-border: rgba(255, 255, 255, 0.12);
+  --q-shadow: rgba(0, 0, 0, 0.3);
+  --q-hover: rgba(255, 255, 255, 0.04);
+}
+
+// Global Theme Styles
+body {
+  background-color: var(--q-background);
+  color: var(--q-text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+// Ensure all page containers use theme background
+.q-page {
+  background-color: var(--q-background);
+  color: var(--q-text-primary);
+}
+
+// Fix gutters and spacing
+.q-page-container {
+  background-color: var(--q-background);
+}
+
+// Ensure proper background for all Quasar components
+.q-layout {
+  background-color: var(--q-background);
+}
+
+.q-drawer {
+  background-color: var(--q-surface);
+}
+
+// Fix any remaining white backgrounds
+.q-gutter-md > * {
+  background-color: transparent;
+}
+
+.q-col-gutter-md > * {
+  background-color: transparent;
+}
+
+// Theme-aware utility classes
+.text-theme-primary {
+  color: var(--q-text-primary) !important;
+}
+
+.text-theme-secondary {
+  color: var(--q-text-secondary) !important;
+}
+
+.bg-theme-surface {
+  background-color: var(--q-surface) !important;
+}
+
+.bg-theme-background {
+  background-color: var(--q-background) !important;
+}
+
+.border-theme {
+  border-color: var(--q-border) !important;
+}
+
+.shadow-theme {
+  box-shadow: 0 2px 8px var(--q-shadow) !important;
+}
+
+// Financial-specific theme classes
+.text-profit {
+  color: var(--q-profit) !important;
+}
+
+.text-loss {
+  color: var(--q-loss) !important;
+}
+
+.bg-profit {
+  background-color: var(--q-profit) !important;
+}
+
+.bg-loss {
+  background-color: var(--q-loss) !important;
+}
+
+// Card styling with theme support
+.theme-card {
+  background-color: var(--q-surface);
+  border: 1px solid var(--q-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--q-shadow);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 16px var(--q-shadow);
+    transform: translateY(-2px);
+  }
+}
+
+// Navigation theme support
+.theme-navigation {
+  background-color: var(--q-primary);
+  color: white;
+
+  .q-item {
+    color: var(--q-text-primary);
+
+    &:hover {
+      background-color: var(--q-hover);
+    }
+
+    &.active {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-right: 3px solid var(--q-accent);
+    }
+  }
+}
+
+// Form elements theme support
+.theme-input {
+  background-color: var(--q-surface);
+  color: var(--q-text-primary);
+  border: 1px solid var(--q-border);
+
+  &:focus {
+    border-color: var(--q-primary);
+    box-shadow: 0 0 0 2px rgba(var(--q-primary), 0.2);
+  }
+}
+
+// Button theme variants
+.btn-theme-primary {
+  background-color: var(--q-primary);
+  color: white;
+
+  &:hover {
+    background-color: var(--q-primary);
+    opacity: 0.9;
+  }
+}
+
+.btn-theme-secondary {
+  background-color: var(--q-secondary);
+  color: white;
+
+  &:hover {
+    background-color: var(--q-secondary);
+    opacity: 0.9;
+  }
+}
+
+.btn-theme-accent {
+  background-color: var(--q-accent);
+  color: white;
+
+  &:hover {
+    background-color: var(--q-accent);
+    opacity: 0.9;
+  }
+}
+
+// Chart theme support
+.chart-container {
+  background-color: var(--q-surface);
+  border: 1px solid var(--q-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+// Responsive theme adjustments
+@media (max-width: 768px) {
+  .theme-card {
+    border-radius: 8px;
+    margin: 8px;
+  }
+}
+
+// Animation for theme transitions
+* {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+// Override Quasar's default colors with our theme
+.q-dark {
+  --q-primary: #0f172a;
+  --q-secondary: #14b8a6;
+  --q-accent: #fbbf24;
+}
+
+// Ensure proper contrast in both themes
+.theme-light {
+  .q-card {
+    background-color: var(--q-surface);
+    color: var(--q-text-primary);
+  }
+
+  .q-list {
+    background-color: var(--q-surface);
+  }
+}
+
+.theme-dark {
+  .q-card {
+    background-color: var(--q-surface);
+    color: var(--q-text-primary);
+  }
+
+  .q-list {
+    background-color: var(--q-surface);
+  }
+}

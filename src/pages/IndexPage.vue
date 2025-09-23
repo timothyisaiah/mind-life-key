@@ -5,16 +5,21 @@
       <div class="row items-center justify-between">
         <div>
           <h4 class="text-h4 text-weight-bold q-ma-none">MindLifeKey</h4>
-          <p class="text-subtitle1 text-grey-6 q-ma-none">Your Financial Dashboard</p>
+          <p class="text-subtitle1 text-theme-secondary q-ma-none">Your Financial Dashboard</p>
         </div>
         <div class="text-right">
-          <div class="text-h5 text-weight-bold" :class="netWorth >= 0 ? 'text-positive' : 'text-negative'">
+          <div class="text-h5 text-weight-bold" :class="netWorth >= 0 ? 'text-profit' : 'text-loss'">
             {{ formatCurrency(netWorth) }}
           </div>
-          <div class="text-caption text-grey-6">
+          <div class="text-caption text-theme-secondary">
             Net Worth
             <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
             <span v-else class="text-white q-ml-xs">• Live</span>
+          </div>
+          <div class="q-mt-sm">
+            <q-btn flat dense size="sm" :icon="showThemeShowcase ? 'visibility_off' : 'palette'"
+              :label="showThemeShowcase ? 'Hide Theme' : 'Show Theme'" @click="showThemeShowcase = !showThemeShowcase"
+              color="accent" />
           </div>
         </div>
       </div>
@@ -91,8 +96,8 @@
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="trending_up" size="2rem" color="positive" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold text-positive">{{ formatCurrency(monthlyIncome) }}</div>
-            <div class="text-caption text-grey-6">Monthly Income</div>
+            <div class="text-h6 text-weight-bold text-profit">{{ formatCurrency(monthlyIncome) }}</div>
+            <div class="text-caption text-theme-secondary">Monthly Income</div>
           </q-card-section>
         </q-card>
       </div>
@@ -101,8 +106,8 @@
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="trending_down" size="2rem" color="negative" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold text-negative">{{ formatCurrency(monthlyExpenses) }}</div>
-            <div class="text-caption text-grey-6">Monthly Expenses</div>
+            <div class="text-h6 text-weight-bold text-loss">{{ formatCurrency(monthlyExpenses) }}</div>
+            <div class="text-caption text-theme-secondary">Monthly Expenses</div>
           </q-card-section>
         </q-card>
       </div>
@@ -112,10 +117,10 @@
           <q-card-section class="text-center">
             <q-icon name="account_balance" size="2rem" color="primary" class="q-mb-sm" />
             <div class="text-h6 text-weight-bold"
-              :class="(monthlyIncome - monthlyExpenses) >= 0 ? 'text-positive' : 'text-negative'">
+              :class="(monthlyIncome - monthlyExpenses) >= 0 ? 'text-profit' : 'text-loss'">
               {{ formatCurrency(monthlyIncome - monthlyExpenses) }}
             </div>
-            <div class="text-caption text-grey-6">Monthly Balance</div>
+            <div class="text-caption text-theme-secondary">Monthly Balance</div>
           </q-card-section>
         </q-card>
       </div>
@@ -132,6 +137,11 @@
       </div>
     </div>
 
+    <!-- Theme Showcase Section (only show in development or when explicitly enabled) -->
+    <div class="q-pa-md" v-if="showThemeShowcase">
+      <ThemeShowcase />
+    </div>
+
     <!-- Cash Flow Forecast Preview -->
     <div class="q-pa-md">
       <q-card>
@@ -140,7 +150,7 @@
             <div class="text-h6">6-Month Cash Flow Forecast</div>
             <q-btn flat color="primary" label="View Full Forecast" :to="{ name: 'forecaster' }" icon="arrow_forward" />
           </div>
-          <div v-if="forecastPreview.length === 0" class="text-center text-grey-6 q-py-lg">
+          <div v-if="forecastPreview.length === 0" class="text-center text-theme-secondary q-py-lg">
             <q-icon name="trending_up" size="3rem" class="q-mb-md" />
             <div class="text-h6 q-mb-sm">No forecast data available</div>
             <div class="text-body2">Set up recurring transactions to see cash flow projections</div>
@@ -151,10 +161,10 @@
                 <q-card flat bordered>
                   <q-card-section class="text-center">
                     <div class="text-subtitle2 text-weight-bold q-mb-sm">{{ month.monthName }}</div>
-                    <div class="text-h6" :class="month.endingBalance >= 0 ? 'text-positive' : 'text-negative'">
+                    <div class="text-h6" :class="month.endingBalance >= 0 ? 'text-profit' : 'text-loss'">
                       {{ formatCurrency(month.endingBalance) }}
                     </div>
-                    <div class="text-caption text-grey-6">
+                    <div class="text-caption text-theme-secondary">
                       Net: {{ formatCurrency(month.netCashFlow) }}
                     </div>
                   </q-card-section>
@@ -171,7 +181,7 @@
       <q-card>
         <q-card-section>
           <div class="text-h6 q-mb-md">Recent Transactions</div>
-          <div v-if="recentTransactions.length === 0" class="text-center text-grey-6 q-py-lg">
+          <div v-if="recentTransactions.length === 0" class="text-center text-theme-secondary q-py-lg">
             <q-icon name="receipt_long" size="3rem" class="q-mb-md" />
             <div class="text-h6 q-mb-sm">No transactions yet</div>
             <div class="text-body2 q-mb-md">Get started by adding your first transaction or load demo data to explore
@@ -221,7 +231,7 @@
               <q-card flat bordered>
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold">{{ goal.name }}</div>
-                  <div class="text-caption text-grey-6 q-mb-sm">
+                  <div class="text-caption text-theme-secondary q-mb-sm">
                     Target: {{ formatCurrency(goal.targetAmount) }} by {{ formatDate(goal.targetDate) }}
                   </div>
                   <q-linear-progress :value="goal.currentAmount / goal.targetAmount" color="primary" size="20px"
@@ -258,8 +268,8 @@
                 <q-card-section class="text-center">
                   <q-icon :name="achievement.icon" size="2rem" color="orange" class="q-mb-sm" />
                   <div class="text-subtitle2 text-weight-bold q-mb-xs">{{ achievement.title }}</div>
-                  <div class="text-caption text-grey-6">{{ achievement.description }}</div>
-                  <div class="text-caption text-grey-5 q-mt-xs">
+                  <div class="text-caption text-theme-secondary">{{ achievement.description }}</div>
+                  <div class="text-caption text-theme-secondary q-mt-xs">
                     {{ formatDate(achievement.earnedAt) }}
                   </div>
                 </q-card-section>
@@ -317,7 +327,7 @@
                     :class="trendAnalysis.income.trend >= 0 ? 'text-positive' : 'text-negative'">
                     {{ trendAnalysis.income.trend >= 0 ? '+' : '' }}{{ trendAnalysis.income.trend.toFixed(1) }}%
                   </div>
-                  <div class="text-caption text-grey-6">vs last month</div>
+                  <div class="text-caption text-theme-secondary">vs last month</div>
                 </q-card-section>
               </q-card>
             </div>
@@ -332,7 +342,7 @@
                     :class="trendAnalysis.expenses.trend <= 0 ? 'text-positive' : 'text-negative'">
                     {{ trendAnalysis.expenses.trend >= 0 ? '+' : '' }}{{ trendAnalysis.expenses.trend.toFixed(1) }}%
                   </div>
-                  <div class="text-caption text-grey-6">vs last month</div>
+                  <div class="text-caption text-theme-secondary">vs last month</div>
                 </q-card-section>
               </q-card>
             </div>
@@ -347,7 +357,7 @@
                     :class="trendAnalysis.netWorth.trend >= 0 ? 'text-positive' : 'text-negative'">
                     {{ trendAnalysis.netWorth.trend >= 0 ? '+' : '' }}{{ trendAnalysis.netWorth.trend.toFixed(1) }}%
                   </div>
-                  <div class="text-caption text-grey-6">vs last month</div>
+                  <div class="text-caption text-theme-secondary">vs last month</div>
                 </q-card-section>
               </q-card>
             </div>
@@ -437,6 +447,7 @@ import { formatCurrency, formatDate, formatDateShort } from 'src/utils/formatter
 import { loadDemoData } from 'src/utils/demoData'
 import ExpenseChart from 'src/components/charts/ExpenseChart.vue'
 import BalanceChart from 'src/components/charts/BalanceChart.vue'
+import ThemeShowcase from 'src/components/ThemeShowcase.vue'
 
 const financialStore = useFinancialStore()
 
@@ -507,6 +518,7 @@ const fabExpanded = ref(false)
 const isRefreshing = ref(false)
 const lastUpdateTime = ref(new Date())
 const refreshKey = ref(0) // Force component re-renders
+const showThemeShowcase = ref(false) // Set to true to show theme showcase
 
 // Form data
 const newTransaction = ref({
@@ -666,12 +678,13 @@ onUnmounted(() => {
 
 <style scoped>
 .dashboard-page {
-  background-color: #f5f5f5;
+  background-color: var(--q-background);
   min-height: 100vh;
+  color: var(--q-text-primary);
 }
 
 .dashboard-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
   color: white;
 }
 
@@ -685,7 +698,9 @@ onUnmounted(() => {
 
 .q-card {
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--q-shadow);
+  background-color: var(--q-surface);
+  color: var(--q-text-primary);
 }
 
 .notification-card {
@@ -693,12 +708,13 @@ onUnmounted(() => {
 }
 
 .notification-card.overdue {
-  border-left-color: #F44336;
+  border-left-color: var(--q-loss);
 }
 
 .notification-card.upcoming {
-  border-left-color: #FF9800;
+  border-left-color: var(--q-warning);
 }
+
 .animate-spin {
   animation: spin 1s linear infinite;
 }

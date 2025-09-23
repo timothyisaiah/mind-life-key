@@ -433,12 +433,13 @@ onMounted(() => {
 
 <style scoped>
 .cash-flow-forecaster-page {
-  background-color: #f5f5f5;
+  background-color: var(--q-background);
+  color: var(--q-text-primary);
   min-height: 100vh;
 }
 
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
   color: white;
 }
 

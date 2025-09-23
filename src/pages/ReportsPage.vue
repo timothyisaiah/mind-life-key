@@ -7,7 +7,7 @@
         <div class="row items-center justify-between">
           <div>
             <h4 class="text-h4 text-weight-bold q-ma-none">Reports</h4>
-            <p class="text-subtitle1 text-grey-6 q-ma-none">
+            <p class="text-subtitle1 text-theme-secondary q-ma-none">
               Financial insights and analytics
               <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
               <span v-else class="text-white q-ml-xs">• Live</span>
@@ -52,8 +52,8 @@
             <q-card class="summary-card">
               <q-card-section class="text-center">
                 <q-icon name="trending_up" size="2rem" color="positive" class="q-mb-sm" />
-                <div class="text-h6 text-weight-bold text-positive">{{ formatCurrency(periodIncome) }}</div>
-                <div class="text-caption text-grey-6">Total Income</div>
+                <div class="text-h6 text-weight-bold text-profit">{{ formatCurrency(periodIncome) }}</div>
+                <div class="text-caption text-theme-secondary">Total Income</div>
               </q-card-section>
             </q-card>
           </div>
@@ -62,9 +62,9 @@
             <q-card class="summary-card">
               <q-card-section class="text-center">
                 <q-icon name="trending_down" size="2rem" color="negative" class="q-mb-sm" />
-                <div class="text-h6 text-weight-bold text-negative">{{ formatCurrency(periodExpenses) }}
+                <div class="text-h6 text-weight-bold text-loss">{{ formatCurrency(periodExpenses) }}
                 </div>
-                <div class="text-caption text-grey-6">Total Expenses</div>
+                <div class="text-caption text-theme-secondary">Total Expenses</div>
               </q-card-section>
             </q-card>
           </div>
@@ -74,10 +74,10 @@
               <q-card-section class="text-center">
                 <q-icon name="account_balance" size="2rem" color="primary" class="q-mb-sm" />
                 <div class="text-h6 text-weight-bold"
-                  :class="(periodIncome - periodExpenses) >= 0 ? 'text-positive' : 'text-negative'">
+                  :class="(periodIncome - periodExpenses) >= 0 ? 'text-profit' : 'text-loss'">
                   {{ formatCurrency(periodIncome - periodExpenses) }}
                 </div>
-                <div class="text-caption text-grey-6">Net Income</div>
+                <div class="text-caption text-theme-secondary">Net Income</div>
               </q-card-section>
             </q-card>
           </div>
@@ -87,7 +87,7 @@
               <q-card-section class="text-center">
                 <q-icon name="percent" size="2rem" color="info" class="q-mb-sm" />
                 <div class="text-h6 text-weight-bold text-info">{{ savingsRate }}%</div>
-                <div class="text-caption text-grey-6">Savings Rate</div>
+                <div class="text-caption text-theme-secondary">Savings Rate</div>
               </q-card-section>
             </q-card>
           </div>
@@ -129,7 +129,7 @@
             <q-card>
               <q-card-section>
                 <div class="text-h6 q-mb-md">Income Breakdown</div>
-                <div v-if="incomeByCategory.length === 0" class="text-center text-grey-6 q-py-lg">
+                <div v-if="incomeByCategory.length === 0" class="text-center text-theme-secondary q-py-lg">
                   No income data for this period
                 </div>
                 <div v-else>
@@ -155,7 +155,7 @@
             <q-card>
               <q-card-section>
                 <div class="text-h6 q-mb-md">Expense Breakdown</div>
-                <div v-if="expensesByCategory.length === 0" class="text-center text-grey-6 q-py-lg">
+                <div v-if="expensesByCategory.length === 0" class="text-center text-theme-secondary q-py-lg">
                   No expense data for this period
                 </div>
                 <div v-else>
@@ -565,12 +565,13 @@ onMounted(() => {
 
 <style scoped>
 .reports-page {
-  background-color: #f5f5f5;
+  background-color: var(--q-background);
   min-height: 100vh;
+  color: var(--q-text-primary);
 }
 
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
   color: white;
 }
 
@@ -589,7 +590,9 @@ onMounted(() => {
 
 .q-card {
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--q-shadow);
+  background-color: var(--q-surface);
+  color: var(--q-text-primary);
 }
 
 .animate-spin {
