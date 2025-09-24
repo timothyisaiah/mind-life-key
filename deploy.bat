@@ -78,8 +78,8 @@ if "%PACKAGE_MANAGER%"=="yarn" (
 )
 
 REM Check if build was successful
-if not exist "dist" (
-    echo [ERROR] Build failed. No dist directory found.
+if not exist "dist\spa" (
+    echo [ERROR] Build failed. No dist\spa directory found.
     exit /b 1
 )
 
@@ -91,7 +91,7 @@ mkdir "%TEMP_DIR%"
 echo [INFO] Created temporary directory: %TEMP_DIR%
 
 REM Copy dist contents to temp directory
-xcopy "dist\*" "%TEMP_DIR%\" /E /I /Y
+xcopy "dist\spa\*" "%TEMP_DIR%\" /E /I /Y
 
 REM Navigate to temp directory
 pushd "%TEMP_DIR%"

@@ -99,8 +99,8 @@ else
 fi
 
 # Check if build was successful
-if [ ! -d "dist" ]; then
-    print_error "Build failed. No dist directory found."
+if [ ! -d "dist/spa" ]; then
+    print_error "Build failed. No dist/spa directory found."
     exit 1
 fi
 
@@ -111,7 +111,7 @@ TEMP_DIR=$(mktemp -d)
 print_status "Created temporary directory: $TEMP_DIR"
 
 # Copy dist contents to temp directory
-cp -r dist/* "$TEMP_DIR/"
+cp -r dist/spa/* "$TEMP_DIR/"
 
 # Navigate to temp directory
 cd "$TEMP_DIR"
