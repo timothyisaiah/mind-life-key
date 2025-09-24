@@ -147,14 +147,14 @@
   .q-btn--flat:hover {
     background-color: rgba(0, 0, 0, 0.04) !important;
   }
+  .q-toolbar {
+    background-color: var(--q-primary) !important;
+  }
 }
 
 /* Global improvements for both themes */
 
 /* Ensure all header icons are always white and header is always dark */
-.q-header {
-  background-color: #0f172a !important;
-}
 
 /* Make drawer background match header in both themes */
 .q-drawer {
@@ -193,7 +193,7 @@
   color: white !important;
 }
 
-.q-header .q-toolbar {
+.q-header {
   background-color: #0f172a !important;
 }
 
