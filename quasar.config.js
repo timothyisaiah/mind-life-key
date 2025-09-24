@@ -38,13 +38,13 @@ export default defineConfig((/* ctx */) => {
       },
 
       vueRouterMode: 'hash', // available values: 'hash', 'history'
-      // vueRouterBase,
+      vueRouterBase: process.env.NODE_ENV === 'production' ? '/mind-life-key/' : '/',
       // vueDevtools,
       // vueOptionsAPI: false,
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      // publicPath: '/',
+      publicPath: process.env.NODE_ENV === 'production' ? '/mind-life-key/' : '/',
       // analyze: true,
       // env: {},
       // rawDefine: {}
