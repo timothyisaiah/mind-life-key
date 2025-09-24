@@ -139,7 +139,7 @@ onMounted(() => {
 
 <style scoped>
 .auth-layout {
-    background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
+    background: var(--q-primary);
     min-height: 100vh;
 }
 

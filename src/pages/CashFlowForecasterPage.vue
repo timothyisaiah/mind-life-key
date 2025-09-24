@@ -439,7 +439,7 @@ onMounted(() => {
 }
 
 .page-header {
-  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
+  background: var(--q-primary);
   color: white;
 }
 

@@ -108,11 +108,11 @@
 
                                     <q-item-section>
                                         <q-item-label class="text-weight-bold">{{ recurring.description
-                                        }}</q-item-label>
+                                            }}</q-item-label>
                                         <q-item-label caption>
                                             {{ getCategoryName(recurring.categoryId) }} • {{ recurring.frequency }}
                                             <span v-if="recurring.nextDue">• Next: {{ formatDate(recurring.nextDue)
-                                            }}</span>
+                                                }}</span>
                                         </q-item-label>
                                     </q-item-section>
 
@@ -409,7 +409,7 @@ onMounted(() => {
 }
 
 .page-header {
-    background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
+    background: var(--q-primary);
     color: white;
 }
 

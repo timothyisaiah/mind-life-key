@@ -154,7 +154,7 @@
                 <q-card flat bordered>
                   <q-card-section>
                     <div class="text-subtitle1 q-mb-md">Current Month ({{ currentMonthReport.monthName
-                    }})</div>
+                      }})</div>
                     <div class="row q-col-gutter-md">
                       <div class="col-6">
                         <div class="text-center">
@@ -187,7 +187,7 @@
                 <q-card flat bordered>
                   <q-card-section>
                     <div class="text-subtitle1 q-mb-md">Previous Month ({{ previousMonthReport.monthName
-                    }})</div>
+                      }})</div>
                     <div class="row q-col-gutter-md">
                       <div class="col-6">
                         <div class="text-center">
@@ -580,7 +580,7 @@ onMounted(() => {
 }
 
 .page-header {
-  background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
+  background: var(--q-primary);
   color: white;
 }
 
