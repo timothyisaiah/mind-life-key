@@ -9,14 +9,26 @@
         </div>
         <div class="text-right">
           <div class="text-h5 text-weight-bold" :class="netWorth >= 0 ? 'text-profit' : 'text-loss'">
-            {{ formatCurrency(netWorth) }}
+            {{ financialStore.formatCurrencyAmount(netWorth) }}
           </div>
           <div class="text-caption text-theme-secondary">
             Net Worth
             <q-icon v-if="isRefreshing" name="refresh" size="sm" class="text-white animate-spin q-ml-xs" />
             <span v-else class="text-white q-ml-xs">• Live</span>
           </div>
-          <div class="q-mt-sm">
+          <div class="q-mt-sm row q-gutter-sm items-center">
+            <q-select v-model="selectedCurrency" :options="currencyOptions" option-value="code" option-label="name"
+              emit-value map-options dense outlined style="min-width: 120px"
+              @update:model-value="updateDisplayCurrency">
+              <template v-slot:option="scope">
+                <q-item v-bind="scope.itemProps">
+                  <q-item-section>
+                    <q-item-label>{{ scope.opt.name }}</q-item-label>
+                    <q-item-label caption>{{ scope.opt.code }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
             <q-btn flat dense size="sm" :icon="showThemeShowcase ? 'visibility_off' : 'palette'"
               :label="showThemeShowcase ? 'Hide Theme' : 'Show Theme'" @click="showThemeShowcase = !showThemeShowcase"
               color="accent" />
@@ -46,7 +58,7 @@
                   </q-item-section>
                   <q-item-section side>
                     <q-item-label class="text-negative text-weight-bold">
-                      {{ formatCurrency(bill.amount) }}
+                      {{ financialStore.formatCurrencyAmount(bill.amount) }}
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -76,7 +88,7 @@
                   </q-item-section>
                   <q-item-section side>
                     <q-item-label class="text-negative text-weight-bold">
-                      {{ formatCurrency(bill.amount) }}
+                      {{ financialStore.formatCurrencyAmount(bill.amount) }}
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -96,7 +108,8 @@
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="trending_up" size="2rem" color="positive" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold text-profit">{{ formatCurrency(monthlyIncome) }}</div>
+            <div class="text-h6 text-weight-bold text-profit">{{ financialStore.formatCurrencyAmount(monthlyIncome) }}
+            </div>
             <div class="text-caption text-theme-secondary">Monthly Income</div>
           </q-card-section>
         </q-card>
@@ -106,7 +119,8 @@
         <q-card class="stat-card">
           <q-card-section class="text-center">
             <q-icon name="trending_down" size="2rem" color="negative" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold text-loss">{{ formatCurrency(monthlyExpenses) }}</div>
+            <div class="text-h6 text-weight-bold text-loss">{{ financialStore.formatCurrencyAmount(monthlyExpenses) }}
+            </div>
             <div class="text-caption text-theme-secondary">Monthly Expenses</div>
           </q-card-section>
         </q-card>
@@ -118,7 +132,7 @@
             <q-icon name="account_balance" size="2rem" color="primary" class="q-mb-sm" />
             <div class="text-h6 text-weight-bold"
               :class="(monthlyIncome - monthlyExpenses) >= 0 ? 'text-profit' : 'text-loss'">
-              {{ formatCurrency(monthlyIncome - monthlyExpenses) }}
+              {{ financialStore.formatCurrencyAmount(monthlyIncome - monthlyExpenses) }}
             </div>
             <div class="text-caption text-theme-secondary">Monthly Balance</div>
           </q-card-section>
@@ -162,10 +176,10 @@
                   <q-card-section class="text-center">
                     <div class="text-subtitle2 text-weight-bold q-mb-sm">{{ month.monthName }}</div>
                     <div class="text-h6" :class="month.endingBalance >= 0 ? 'text-profit' : 'text-loss'">
-                      {{ formatCurrency(month.endingBalance) }}
+                      {{ financialStore.formatCurrencyAmount(month.endingBalance) }}
                     </div>
                     <div class="text-caption text-theme-secondary">
-                      Net: {{ formatCurrency(month.netCashFlow) }}
+                      Net: {{ financialStore.formatCurrencyAmount(month.netCashFlow) }}
                     </div>
                   </q-card-section>
                 </q-card>
@@ -207,7 +221,8 @@
                 <q-item-section side>
                   <q-item-label :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
                     class="text-weight-bold">
-                    {{ transaction.type === 'income' ? '+' : '-' }}{{ formatCurrency(transaction.amount) }}
+                    {{ transaction.type === 'income' ? '+' : '-' }}{{
+                      financialStore.formatCurrencyAmount(transaction.amount, transaction.currency || 'UGX') }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
@@ -232,12 +247,15 @@
                 <q-card-section>
                   <div class="text-subtitle1 text-weight-bold">{{ goal.name }}</div>
                   <div class="text-caption text-theme-secondary q-mb-sm">
-                    Target: {{ formatCurrency(goal.targetAmount) }} by {{ formatDate(goal.targetDate) }}
+                    Target: {{ financialStore.formatCurrencyAmount(goal.targetAmount) }} by {{
+                      formatDate(goal.targetDate)
+                    }}
                   </div>
                   <q-linear-progress :value="goal.currentAmount / goal.targetAmount" color="primary" size="20px"
                     rounded />
                   <div class="text-caption q-mt-sm">
-                    {{ formatCurrency(goal.currentAmount) }} / {{ formatCurrency(goal.targetAmount) }}
+                    {{ financialStore.formatCurrencyAmount(goal.currentAmount) }} / {{
+                      financialStore.formatCurrencyAmount(goal.targetAmount) }}
                     ({{ Math.round((goal.currentAmount / goal.targetAmount) * 100) }}%)
                   </div>
                 </q-card-section>
@@ -400,8 +418,16 @@
           <q-form @submit="addTransaction" class="q-col-gutter-md">
             <q-input v-model="newTransaction.description" label="Description" outlined
               :rules="[val => !!val || 'Description is required']" />
-            <q-input v-model.number="newTransaction.amount" label="Amount" type="number" step="0.01" outlined
-              :rules="[val => val > 0 || 'Amount must be greater than 0']" />
+            <div class="row q-col-gutter-sm">
+              <div class="col-8">
+                <q-input v-model.number="newTransaction.amount" label="Amount" type="number" step="0.01" outlined
+                  :rules="[val => val > 0 || 'Amount must be greater than 0']" />
+              </div>
+              <div class="col-4">
+                <q-select v-model="newTransaction.currency" :options="currencyOptions" label="Currency" outlined
+                  emit-value map-options />
+              </div>
+            </div>
             <q-select v-model="newTransaction.categoryId" :options="categoryOptions" label="Category" outlined
               emit-value map-options :rules="[val => !!val || 'Category is required']" />
             <q-input v-model="newTransaction.date" label="Date" type="date" outlined />
@@ -443,7 +469,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
-import { formatCurrency, formatDate, formatDateShort } from 'src/utils/formatters'
+import { formatDate, formatDateShort } from 'src/utils/formatters'
 import { loadDemoData } from 'src/utils/demoData'
 import ExpenseChart from 'src/components/charts/ExpenseChart.vue'
 import BalanceChart from 'src/components/charts/BalanceChart.vue'
@@ -462,17 +488,18 @@ const {
   monthlyExpenses,
   expensesByCategory,
   upcomingBills,
-  overdueBills
+  overdueBills,
+  supportedCurrencies
 } = financialStore
 
 const recentTransactions = computed(() => {
-  return [...transactions]
+  return [...(transactions.value || [])]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 5)
 })
 
 const activeGoals = computed(() => {
-  return goals.filter(goal => {
+  return (goals.value || []).filter(goal => {
     const targetDate = new Date(goal.targetDate)
     const today = new Date()
     return targetDate > today && goal.currentAmount < goal.targetAmount
@@ -499,8 +526,30 @@ const unreadNotificationsCount = computed(() => financialStore.getUnreadNotifica
 
 const highPriorityNotifications = computed(() => financialStore.getHighPriorityNotifications())
 
+// Currency support
+const selectedCurrency = ref(userSettings.value?.currency || 'UGX')
+
+const currencyOptions = computed(() =>
+  (supportedCurrencies.value || []).map(currency => ({
+    code: currency.code,
+    name: currency.name
+  }))
+)
+
+const updateDisplayCurrency = (currencyCode) => {
+  financialStore.setUserCurrency(currencyCode)
+  selectedCurrency.value = currencyCode
+}
+
+// Watch for changes in userSettings to keep selectedCurrency in sync
+watch(() => userSettings.value?.currency, (newCurrency) => {
+  if (newCurrency && newCurrency !== selectedCurrency.value) {
+    selectedCurrency.value = newCurrency
+  }
+}, { immediate: true })
+
 const categoryOptions = computed(() => {
-  return categories
+  return (categories.value || [])
     .filter(cat => cat.type === (transactionDialogType.value === 'income' ? 'income' : 'expense'))
     .map(cat => ({
       label: cat.name,
@@ -526,7 +575,8 @@ const newTransaction = ref({
   amount: 0,
   categoryId: null,
   date: new Date().toISOString().split('T')[0],
-  type: 'expense'
+  type: 'expense',
+  currency: 'UGX'
 })
 
 const newGoal = ref({
@@ -538,7 +588,7 @@ const newGoal = ref({
 
 // Methods
 const getCategoryName = (categoryId) => {
-  const category = categories.find(cat => cat.id === categoryId)
+  const category = (categories.value || []).find(cat => cat.id === categoryId)
   return category ? category.name : 'Unknown'
 }
 
@@ -549,7 +599,8 @@ const showAddTransactionDialog = (type) => {
     amount: 0,
     categoryId: null,
     date: new Date().toISOString().split('T')[0],
-    type: type
+    type: type,
+    currency: 'UGX'
   }
   showTransactionDialog.value = true
 }
@@ -561,7 +612,8 @@ const closeTransactionDialog = () => {
     amount: 0,
     categoryId: null,
     date: new Date().toISOString().split('T')[0],
-    type: 'expense'
+    type: 'expense',
+    currency: 'UGX'
   }
 }
 
@@ -644,13 +696,13 @@ watch(() => financialStore.categories, () => {
 // Auto-refresh every 30 seconds
 let autoRefreshInterval = null
 
-const startAutoRefresh = () => {
-  autoRefreshInterval = setInterval(() => {
-    if (!isRefreshing.value) {
-      triggerDashboardRefresh()
-    }
-  }, 30000) // 30 seconds
-}
+// const startAutoRefresh = () => {
+//   autoRefreshInterval = setInterval(() => {
+//     if (!isRefreshing.value) {
+//       triggerDashboardRefresh()
+//     }
+//   }, 30000) // 30 seconds
+// }
 
 const stopAutoRefresh = () => {
   if (autoRefreshInterval) {
@@ -667,7 +719,7 @@ onMounted(() => {
   // Generate smart notifications
   financialStore.generateSmartNotifications()
   // Start auto-refresh
-  startAutoRefresh()
+  // startAutoRefresh()
 })
 
 // Cleanup on unmount

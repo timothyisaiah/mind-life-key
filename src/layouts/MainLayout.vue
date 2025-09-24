@@ -159,6 +159,13 @@ const navigationLinks = [
     icon: 'notifications',
     route: '/notifications',
     routeName: 'notifications'
+  },
+  {
+    title: 'Currency',
+    caption: 'Multi-currency support',
+    icon: 'currency_exchange',
+    route: '/currency',
+    routeName: 'currency'
   }
 ]
 

@@ -20,6 +20,15 @@ export const generateDemoData = () => {
       type: 'income',
       notes: 'Web development project',
     },
+    {
+      description: 'International Client Payment',
+      amount: 500,
+      categoryId: 8, // Freelance
+      date: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      type: 'income',
+      notes: 'Payment from US client',
+      currency: 'USD',
+    },
 
     // Expenses - spread across the last 30 days
     {
@@ -53,6 +62,24 @@ export const generateDemoData = () => {
       date: new Date(today.getTime() - 21 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       type: 'expense',
       notes: 'Monthly subscription',
+    },
+    {
+      description: 'Online Course (USD)',
+      amount: 99,
+      categoryId: 5, // Healthcare (using as education)
+      date: new Date(today.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      type: 'expense',
+      notes: 'Programming course from US platform',
+      currency: 'USD',
+    },
+    {
+      description: 'International Shipping',
+      amount: 25,
+      categoryId: 6, // Shopping
+      date: new Date(today.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      type: 'expense',
+      notes: 'Shipping from Europe',
+      currency: 'EUR',
     },
     {
       description: 'Restaurant Dinner',

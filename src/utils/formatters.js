@@ -1,4 +1,13 @@
-export const formatCurrency = (amount, currency = 'USD') => {
+export const formatCurrency = (amount, currency = 'UGX') => {
+  // For UGX, we'll use a custom format since it's not well supported by Intl
+  if (currency === 'UGX') {
+    const formattedAmount = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
+    return `USh ${formattedAmount}`
+  }
+
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,

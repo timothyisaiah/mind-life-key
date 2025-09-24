@@ -53,6 +53,11 @@ const routes = [
         name: 'notifications',
         component: () => import('pages/NotificationsPage.vue'),
       },
+      {
+        path: '/currency',
+        name: 'currency',
+        component: () => import('pages/CurrencyPage.vue'),
+      },
     ],
   },
 

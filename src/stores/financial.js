@@ -38,25 +38,76 @@ export const useFinancialStore = defineStore('financial', () => {
     { id: 10, name: 'Other', type: 'expense', color: '#85C1E9' },
   ])
   const userSettings = ref({
-    currency: 'USD',
+    currency: 'UGX',
     startingBalance: 0,
     currentBalance: 0,
   })
 
+  // Multi-currency support
+  const supportedCurrencies = ref([
+    { code: 'UGX', name: 'Ugandan Shilling', symbol: 'USh', rate: 1 }, // Default currency
+    { code: 'USD', name: 'US Dollar', symbol: '$', rate: 0.00027 },
+    { code: 'EUR', name: 'Euro', symbol: '€', rate: 0.00025 },
+    { code: 'GBP', name: 'British Pound', symbol: '£', rate: 0.00021 },
+    { code: 'KES', name: 'Kenyan Shilling', symbol: 'KSh', rate: 0.35 },
+    { code: 'TZS', name: 'Tanzanian Shilling', symbol: 'TSh', rate: 0.63 },
+    { code: 'RWF', name: 'Rwandan Franc', symbol: 'RF', rate: 0.98 },
+  ])
+
+  const exchangeRates = ref({})
+  const lastExchangeRateUpdate = ref(null)
+
   // Encryption key (in production, this should be user-specific and securely stored)
   const ENCRYPTION_KEY = 'mindlifekey-2024'
+
+  // Currency conversion functions
+  const convertCurrency = (amount, fromCurrency, toCurrency = userSettings.value.currency) => {
+    if (fromCurrency === toCurrency) return amount
+
+    const fromRate = supportedCurrencies.value.find((c) => c.code === fromCurrency)?.rate || 1
+    const toRate = supportedCurrencies.value.find((c) => c.code === toCurrency)?.rate || 1
+
+    // Convert to UGX first, then to target currency
+    const amountInUGX = amount / fromRate
+    return amountInUGX * toRate
+  }
+
+  const formatCurrencyAmount = (amount, currency = userSettings.value.currency) => {
+    const currencyInfo = supportedCurrencies.value.find((c) => c.code === currency)
+    if (!currencyInfo) return `${amount}`
+
+    const formattedAmount = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: currency === 'UGX' ? 0 : 2,
+      maximumFractionDigits: currency === 'UGX' ? 0 : 2,
+    }).format(amount)
+
+    return `${currencyInfo.symbol} ${formattedAmount}`
+  }
+
+  const getCurrentCurrency = computed(() => {
+    return (
+      supportedCurrencies.value.find((c) => c.code === userSettings.value.currency) ||
+      supportedCurrencies.value[0]
+    )
+  })
 
   // Computed
   const totalIncome = computed(() => {
     return transactions.value
       .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => {
+        const convertedAmount = convertCurrency(t.amount, t.currency || 'UGX')
+        return sum + convertedAmount
+      }, 0)
   })
 
   const totalExpenses = computed(() => {
     return transactions.value
       .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => {
+        const convertedAmount = convertCurrency(t.amount, t.currency || 'UGX')
+        return sum + convertedAmount
+      }, 0)
   })
 
   const netWorth = computed(() => {
@@ -76,7 +127,10 @@ export const useFinancialStore = defineStore('financial', () => {
           transactionDate.getFullYear() === currentYear
         )
       })
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => {
+        const convertedAmount = convertCurrency(t.amount, t.currency || 'UGX')
+        return sum + convertedAmount
+      }, 0)
   })
 
   const monthlyExpenses = computed(() => {
@@ -92,7 +146,10 @@ export const useFinancialStore = defineStore('financial', () => {
           transactionDate.getFullYear() === currentYear
         )
       })
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => {
+        const convertedAmount = convertCurrency(t.amount, t.currency || 'UGX')
+        return sum + convertedAmount
+      }, 0)
   })
 
   const expensesByCategory = computed(() => {
@@ -136,6 +193,7 @@ export const useFinancialStore = defineStore('financial', () => {
       id: Date.now(),
       ...transaction,
       date: transaction.date || new Date().toISOString().split('T')[0],
+      currency: transaction.currency || 'UGX', // Default to UGX
     }
     transactions.value.push(newTransaction)
     saveToLocalStorage()
@@ -493,6 +551,9 @@ export const useFinancialStore = defineStore('financial', () => {
       autoAllocationSettings: autoAllocationSettings.value,
       notificationSettings: notificationSettings.value,
       notifications: notifications.value,
+      supportedCurrencies: supportedCurrencies.value,
+      exchangeRates: exchangeRates.value,
+      lastExchangeRateUpdate: lastExchangeRateUpdate.value,
     }
     localStorage.setItem('mindlifekey_data', encryptData(data))
   }
@@ -512,6 +573,9 @@ export const useFinancialStore = defineStore('financial', () => {
         autoAllocationSettings.value = data.autoAllocationSettings || autoAllocationSettings.value
         notificationSettings.value = data.notificationSettings || notificationSettings.value
         notifications.value = data.notifications || []
+        supportedCurrencies.value = data.supportedCurrencies || supportedCurrencies.value
+        exchangeRates.value = data.exchangeRates || {}
+        lastExchangeRateUpdate.value = data.lastExchangeRateUpdate || null
       }
     }
   }
@@ -537,8 +601,10 @@ export const useFinancialStore = defineStore('financial', () => {
       savingsThreshold: 50,
     }
     notifications.value = []
+    exchangeRates.value = {}
+    lastExchangeRateUpdate.value = null
     userSettings.value = {
-      currency: 'USD',
+      currency: 'UGX',
       startingBalance: 0,
       currentBalance: 0,
     }
@@ -1175,6 +1241,58 @@ export const useFinancialStore = defineStore('financial', () => {
     saveToLocalStorage()
   }
 
+  // Currency management actions
+  const updateExchangeRates = async () => {
+    try {
+      // In a real app, you would fetch from an API like exchangerate-api.com
+      // For now, we'll use static rates that can be updated manually
+      const now = new Date()
+      lastExchangeRateUpdate.value = now.toISOString()
+
+      // Update rates (in a real app, these would come from an API)
+      supportedCurrencies.value.forEach((currency) => {
+        if (currency.code !== 'UGX') {
+          // Simulate rate updates - in production, fetch from API
+          exchangeRates.value[currency.code] = {
+            rate: currency.rate,
+            lastUpdated: now.toISOString(),
+          }
+        }
+      })
+
+      saveToLocalStorage()
+    } catch (error) {
+      console.error('Failed to update exchange rates:', error)
+    }
+  }
+
+  const setUserCurrency = (currencyCode) => {
+    const currency = supportedCurrencies.value.find((c) => c.code === currencyCode)
+    if (currency) {
+      userSettings.value.currency = currencyCode
+      saveToLocalStorage()
+    }
+  }
+
+  const addCustomCurrency = (currency) => {
+    const existingCurrency = supportedCurrencies.value.find((c) => c.code === currency.code)
+    if (!existingCurrency) {
+      supportedCurrencies.value.push(currency)
+      saveToLocalStorage()
+    }
+  }
+
+  const removeCustomCurrency = (currencyCode) => {
+    if (currencyCode !== 'UGX') {
+      // Don't allow removing default currency
+      const index = supportedCurrencies.value.findIndex((c) => c.code === currencyCode)
+      if (index !== -1) {
+        supportedCurrencies.value.splice(index, 1)
+        saveToLocalStorage()
+      }
+    }
+  }
+
   const getUnreadNotificationsCount = () => {
     return notifications.value.filter((n) => !n.read).length
   }
@@ -1195,6 +1313,9 @@ export const useFinancialStore = defineStore('financial', () => {
     autoAllocationSettings,
     notificationSettings,
     notifications,
+    supportedCurrencies,
+    exchangeRates,
+    lastExchangeRateUpdate,
 
     // Computed
     totalIncome,
@@ -1205,6 +1326,7 @@ export const useFinancialStore = defineStore('financial', () => {
     expensesByCategory,
     upcomingBills,
     overdueBills,
+    getCurrentCurrency,
 
     // Actions
     addTransaction,
@@ -1245,5 +1367,13 @@ export const useFinancialStore = defineStore('financial', () => {
     saveToLocalStorage,
     loadFromLocalStorage,
     clearAllData,
+
+    // Currency management
+    convertCurrency,
+    formatCurrencyAmount,
+    updateExchangeRates,
+    setUserCurrency,
+    addCustomCurrency,
+    removeCustomCurrency,
   }
 })

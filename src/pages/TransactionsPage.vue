@@ -80,7 +80,7 @@
                       <q-item-label :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
                         class="text-h6 text-weight-bold">
                         {{ transaction.type === 'income' ? '+' : '-' }}{{
-                          formatCurrency(transaction.amount) }}
+                          formatCurrency(transaction.amount, transaction.currency || 'UGX') }}
                       </q-item-label>
                     </div>
                   </q-item-section>
@@ -112,8 +112,16 @@
           <q-form @submit="saveTransaction" class="q-col-gutter-md">
             <q-input v-model="transactionForm.description" label="Description" outlined
               :rules="[val => !!val || 'Description is required']" />
-            <q-input v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" outlined
-              :rules="[val => val > 0 || 'Amount must be greater than 0']" />
+            <div class="row q-col-gutter-sm">
+              <div class="col-8">
+                <q-input v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" outlined
+                  :rules="[val => val > 0 || 'Amount must be greater than 0']" />
+              </div>
+              <div class="col-4">
+                <q-select v-model="transactionForm.currency" :options="currencyOptions" label="Currency" outlined
+                  emit-value map-options />
+              </div>
+            </div>
             <q-select v-model="transactionForm.categoryId" :options="categoryOptions" label="Category" outlined
               emit-value map-options :rules="[val => !!val || 'Category is required']" />
             <q-input v-model="transactionForm.date" label="Date" type="date" outlined />
@@ -177,12 +185,14 @@ const transactionForm = ref({
   categoryId: null,
   date: new Date().toISOString().split('T')[0],
   type: 'expense',
-  notes: ''
+  notes: '',
+  currency: 'UGX'
 })
 
 // Computed
 const transactions = computed(() => financialStore.transactions)
 const categories = computed(() => financialStore.categories)
+const supportedCurrencies = computed(() => financialStore.supportedCurrencies)
 
 const typeOptions = [
   { label: 'All', value: null },
@@ -190,15 +200,22 @@ const typeOptions = [
   { label: 'Expense', value: 'expense' }
 ]
 
+const currencyOptions = computed(() =>
+  (supportedCurrencies.value || []).map(currency => ({
+    label: `${currency.name} (${currency.code})`,
+    value: currency.code
+  }))
+)
+
 const categoryOptions = computed(() => {
-  return categories.value.map(cat => ({
+  return (categories.value || []).map(cat => ({
     label: cat.name,
     value: cat.id
   }))
 })
 
 const filteredTransactions = computed(() => {
-  let filtered = [...transactions.value]
+  let filtered = [...(transactions.value || [])]
 
   if (filters.value.type) {
     filtered = filtered.filter(t => t.type === filters.value.type)
