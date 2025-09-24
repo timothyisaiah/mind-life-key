@@ -88,6 +88,20 @@ export const useThemeStore = defineStore('theme', () => {
     root.style.setProperty('--q-warning', colors.warning)
     root.style.setProperty('--q-info', colors.info)
 
+    // Additional custom properties for better theming
+    root.style.setProperty(
+      '--q-border',
+      isDarkMode.value ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+    )
+    root.style.setProperty(
+      '--q-hover',
+      isDarkMode.value ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+    )
+    root.style.setProperty(
+      '--q-shadow',
+      isDarkMode.value ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)',
+    )
+
     // Update document class for theme-specific styling
     root.classList.remove('theme-light', 'theme-dark')
     root.classList.add(`theme-${currentTheme.value}`)

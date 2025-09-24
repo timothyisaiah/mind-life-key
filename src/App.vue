@@ -13,3 +13,7 @@ onMounted(() => {
   themeStore.initializeTheme()
 })
 </script>
+
+<style>
+@import './css/app.css';
+</style>

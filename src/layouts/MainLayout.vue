@@ -10,13 +10,12 @@
         </q-toolbar-title>
 
         <div class="row items-center q-gutter-sm">
-          <ThemeToggle />
           <q-btn flat round icon="notifications" :to="{ name: 'notifications' }">
             <q-badge v-if="unreadNotificationsCount > 0" color="negative" floating>
               {{ unreadNotificationsCount }}
             </q-badge>
           </q-btn>
-          <q-btn flat round icon="settings" />
+          <SettingsMenu />
           <q-btn flat round icon="logout" @click="logout" />
         </div>
       </q-toolbar>
@@ -90,7 +89,7 @@ import { useFinancialStore } from 'src/stores/financial'
 import { useAuthStore } from 'src/stores/auth'
 import { useThemeStore } from 'src/stores/theme'
 import { formatCurrency } from 'src/utils/formatters'
-import ThemeToggle from 'src/components/ThemeToggle.vue'
+import SettingsMenu from 'src/components/SettingsMenu.vue'
 
 const financialStore = useFinancialStore()
 const authStore = useAuthStore()

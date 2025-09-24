@@ -248,6 +248,30 @@ export const generateDemoData = () => {
       isActive: true,
     },
     {
+      description: 'Daily Coffee',
+      amount: 5,
+      type: 'expense',
+      categoryId: 2, // Food & Dining
+      frequency: 'daily',
+      startDate: new Date(today.getFullYear(), today.getMonth() - 1, today.getDate())
+        .toISOString()
+        .split('T')[0],
+      notes: 'Daily coffee expense',
+      isActive: true,
+    },
+    {
+      description: 'Weekly Groceries',
+      amount: 80,
+      type: 'expense',
+      categoryId: 2, // Food & Dining
+      frequency: 'weekly',
+      startDate: new Date(today.getFullYear(), today.getMonth() - 1, today.getDate() - 7)
+        .toISOString()
+        .split('T')[0],
+      notes: 'Weekly grocery shopping',
+      isActive: true,
+    },
+    {
       description: 'Gym Membership',
       amount: 50,
       type: 'expense',

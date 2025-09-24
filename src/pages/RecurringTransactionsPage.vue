@@ -16,8 +16,9 @@
                     </div>
                     <div class="row q-gutter-sm">
                         <q-btn color="primary" icon="add" label="Add Recurring" @click="showAddRecurringDialog" />
-                        <q-btn color="secondary" icon="refresh" label="Process Now"
-                            @click="processRecurringTransactions" />
+                        <q-btn color="secondary" icon="refresh"
+                            :label="`Process Now${dueForProcessing.length > 0 ? ` (${dueForProcessing.length})` : ''}`"
+                            @click="processRecurringTransactions" :loading="isProcessing" />
                     </div>
                 </div>
             </div>
@@ -200,6 +201,7 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { Notify } from 'quasar'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency, formatDate } from 'src/utils/formatters'
 
@@ -213,6 +215,7 @@ const recurringToDelete = ref(null)
 
 // Live page state
 const isRefreshing = ref(false)
+const isProcessing = ref(false)
 const lastUpdateTime = ref(new Date())
 const refreshKey = ref(0)
 
@@ -235,6 +238,15 @@ const overdueBills = computed(() => financialStore.overdueBills)
 
 const activeRecurringTransactions = computed(() => {
     return recurringTransactions.value.filter(rt => rt.isActive !== false)
+})
+
+const dueForProcessing = computed(() => {
+    const today = new Date().toISOString().split('T')[0]
+    return recurringTransactions.value.filter(rt =>
+        rt.isActive !== false &&
+        rt.nextDue &&
+        rt.nextDue <= today
+    )
 })
 
 const typeOptions = [
@@ -355,13 +367,49 @@ const deleteRecurringTransaction = () => {
     }
 }
 
-const processRecurringTransactions = () => {
-    const processed = financialStore.processRecurringTransactions()
-    if (processed.length > 0) {
-        // Force immediate refresh
-        setTimeout(() => {
-            triggerPageRefresh()
-        }, 100)
+const processRecurringTransactions = async () => {
+    isProcessing.value = true
+    try {
+        const processed = financialStore.processRecurringTransactions()
+
+        if (processed.length > 0) {
+            // Show success message
+            Notify.create({
+                type: 'positive',
+                message: `Successfully processed ${processed.length} recurring transaction${processed.length > 1 ? 's' : ''}`,
+                icon: 'check_circle',
+                position: 'top',
+                timeout: 3000
+            })
+
+            // Force immediate refresh
+            setTimeout(() => {
+                triggerPageRefresh()
+            }, 100)
+        } else {
+            // Show info message when no transactions to process
+            const totalActive = activeRecurringTransactions.value.length
+            Notify.create({
+                type: 'info',
+                message: totalActive > 0
+                    ? `No recurring transactions are due for processing. You have ${totalActive} active recurring transaction${totalActive > 1 ? 's' : ''} scheduled for future dates.`
+                    : 'No active recurring transactions found. Add some recurring transactions to use this feature.',
+                icon: 'info',
+                position: 'top',
+                timeout: 4000
+            })
+        }
+    } catch (error) {
+        // Show error message
+        Notify.create({
+            type: 'negative',
+            message: 'Error processing recurring transactions',
+            icon: 'error',
+            position: 'top'
+        })
+        console.error('Error processing recurring transactions:', error)
+    } finally {
+        isProcessing.value = false
     }
 }
 

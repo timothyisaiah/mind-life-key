@@ -1,0 +1,289 @@
+/* Global App Styles for MindLifeKey */
+
+/* Dark Mode Text Readability Fixes */
+.theme-dark {
+  /* Fix help text and captions */
+  .q-field__bottom {
+    color: #9ca3af !important; /* Light gray for better readability */
+  }
+
+  .q-field__messages {
+    color: #9ca3af !important;
+  }
+
+  .q-field__hint {
+    color: #9ca3af !important;
+  }
+
+  /* Fix select dropdown text */
+  .q-item__label--caption {
+    color: #9ca3af !important;
+  }
+
+  .q-item__label {
+    color: #f9fafb !important; /* Near white for primary text */
+  }
+
+  /* Fix form field borders and backgrounds */
+  .q-field--outlined .q-field__control {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .q-field--outlined .q-field__control:hover {
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .q-field--outlined.q-field--focused .q-field__control {
+    border-color: var(--q-primary) !important;
+    box-shadow: 0 0 0 1px var(--q-primary) !important;
+  }
+
+  /* Fix input text color */
+  .q-field__native {
+    color: #f9fafb !important;
+  }
+
+  .q-field__input {
+    color: #f9fafb !important;
+  }
+
+  /* Fix select dropdown background */
+  .q-menu {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  .q-item {
+    color: #f9fafb !important;
+  }
+
+  .q-item:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* Fix card backgrounds */
+  .q-card {
+    background-color: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Fix list backgrounds */
+  .q-list {
+    background-color: transparent !important;
+  }
+
+  .q-list--bordered {
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Fix separator colors */
+  .q-separator {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Fix chip colors */
+  .q-chip {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #f9fafb !important;
+  }
+
+  /* Fix banner colors */
+  .q-banner {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Fix dialog backgrounds */
+  .q-dialog__inner .q-card {
+    background-color: #1e293b !important;
+  }
+
+  /* Fix drawer backgrounds */
+  .q-drawer {
+    background-color: #0f172a !important;
+  }
+
+  /* Fix header backgrounds */
+  .q-header {
+    background-color: #0f172a !important;
+  }
+
+  /* Fix toolbar backgrounds */
+  .q-toolbar {
+    background-color: #0f172a !important;
+  }
+
+  /* Fix button hover states */
+  .q-btn--flat:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+}
+
+/* Light Mode Improvements */
+.theme-light {
+  /* Ensure good contrast in light mode */
+  .q-field__bottom {
+    color: #6b7280 !important;
+  }
+
+  .q-field__messages {
+    color: #6b7280 !important;
+  }
+
+  .q-field__hint {
+    color: #6b7280 !important;
+  }
+
+  .q-item__label--caption {
+    color: #6b7280 !important;
+  }
+
+  /* Fix theme toggle visibility in light mode */
+  .q-btn--flat {
+    color: #374151 !important;
+  }
+
+  .q-btn--flat:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+  }
+}
+
+/* Global improvements for both themes */
+
+/* Ensure all header icons are always white and header is always dark */
+.q-header {
+  background-color: #0f172a !important;
+}
+
+/* Make drawer background match header in both themes */
+.q-drawer {
+  background-color: #0f172a !important;
+}
+
+/* Make drawer text white to match header */
+.q-drawer .q-item-label,
+.q-drawer .q-item-label--caption,
+.q-drawer .q-item-label[header] {
+  color: white !important;
+}
+
+.q-drawer .q-item-label--caption {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.q-drawer .q-item-label[header] {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Update navigation item hover and active states for dark drawer */
+.q-drawer .navigation-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.q-drawer .navigation-item.active {
+  background-color: rgba(25, 118, 210, 0.2) !important;
+  border-right: 3px solid #1976d2 !important;
+}
+
+.q-header .q-btn,
+.q-header .q-btn .q-icon,
+.q-header .q-toolbar-title,
+.q-header .q-toolbar-title .q-icon {
+  color: white !important;
+}
+
+.q-header .q-toolbar {
+  background-color: #0f172a !important;
+}
+
+.q-header .q-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.q-header .q-btn:hover .q-icon {
+  color: white !important;
+}
+
+.q-field--outlined .q-field__control {
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.q-field--outlined .q-field__control:focus-within {
+  border-width: 2px !important;
+}
+
+.q-card {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.theme-dark .q-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fix notification colors */
+.q-notification {
+  border-radius: 8px !important;
+}
+
+/* Fix dropdown menu styling */
+.q-menu {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+.theme-dark .q-menu {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fix form validation colors */
+.q-field--error .q-field__control {
+  border-color: #f87171 !important;
+}
+
+.theme-dark .q-field--error .q-field__control {
+  border-color: #f87171 !important;
+}
+
+.q-field--error .q-field__messages {
+  color: #f87171 !important;
+}
+
+/* Fix success colors */
+.q-field--success .q-field__control {
+  border-color: #34d399 !important;
+}
+
+.theme-dark .q-field--success .q-field__control {
+  border-color: #34d399 !important;
+}
+
+.q-field--success .q-field__messages {
+  color: #34d399 !important;
+}
+
+/* Fix warning colors */
+.q-field--warning .q-field__control {
+  border-color: #fbbf24 !important;
+}
+
+.theme-dark .q-field--warning .q-field__control {
+  border-color: #fbbf24 !important;
+}
+
+.q-field--warning .q-field__messages {
+  color: #fbbf24 !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .q-card {
+    border-radius: 8px !important;
+  }
+
+  .q-field--outlined .q-field__control {
+    border-radius: 6px !important;
+  }
+}

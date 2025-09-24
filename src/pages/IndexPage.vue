@@ -29,9 +29,9 @@
                 </q-item>
               </template>
             </q-select>
-            <q-btn flat dense size="sm" :icon="showThemeShowcase ? 'visibility_off' : 'palette'"
+            <!-- <q-btn flat dense size="sm" :icon="showThemeShowcase ? 'visibility_off' : 'palette'"
               :label="showThemeShowcase ? 'Hide Theme' : 'Show Theme'" @click="showThemeShowcase = !showThemeShowcase"
-              color="accent" />
+              color="accent" /> -->
           </div>
         </div>
       </div>
@@ -152,9 +152,9 @@
     </div>
 
     <!-- Theme Showcase Section (only show in development or when explicitly enabled) -->
-    <div class="q-pa-md" v-if="showThemeShowcase">
+    <!-- <div class="q-pa-md" v-if="showThemeShowcase">
       <ThemeShowcase />
-    </div>
+    </div> -->
 
     <!-- Cash Flow Forecast Preview -->
     <div class="q-pa-md">
@@ -473,7 +473,7 @@ import { formatDate, formatDateShort } from 'src/utils/formatters'
 import { loadDemoData } from 'src/utils/demoData'
 import ExpenseChart from 'src/components/charts/ExpenseChart.vue'
 import BalanceChart from 'src/components/charts/BalanceChart.vue'
-import ThemeShowcase from 'src/components/ThemeShowcase.vue'
+// import ThemeShowcase from 'src/components/ThemeShowcase.vue'
 
 const financialStore = useFinancialStore()
 
@@ -567,7 +567,7 @@ const fabExpanded = ref(false)
 const isRefreshing = ref(false)
 const lastUpdateTime = ref(new Date())
 const refreshKey = ref(0) // Force component re-renders
-const showThemeShowcase = ref(false) // Set to true to show theme showcase
+// const showThemeShowcase = ref(false) // Set to true to show theme showcase
 
 // Form data
 const newTransaction = ref({

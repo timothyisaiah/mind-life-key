@@ -496,29 +496,84 @@ export const useFinancialStore = defineStore('financial', () => {
 
   // Helper function to calculate next due date
   const calculateNextDueDate = (frequency, startDate) => {
-    const date = new Date(startDate)
+    const today = new Date()
+    const start = new Date(startDate)
+    let date = new Date(start)
 
-    switch (frequency) {
-      case 'daily':
-        date.setDate(date.getDate() + 1)
-        break
-      case 'weekly':
-        date.setDate(date.getDate() + 7)
-        break
-      case 'biweekly':
-        date.setDate(date.getDate() + 14)
-        break
-      case 'monthly':
-        date.setMonth(date.getMonth() + 1)
-        break
-      case 'quarterly':
-        date.setMonth(date.getMonth() + 3)
-        break
-      case 'yearly':
-        date.setFullYear(date.getFullYear() + 1)
-        break
-      default:
-        date.setMonth(date.getMonth() + 1)
+    // If start date is in the past, calculate next occurrence from today
+    if (start < today) {
+      date = new Date(today)
+
+      // Adjust to the correct day of the month/week for monthly/weekly frequencies
+      switch (frequency) {
+        case 'monthly':
+          date.setDate(start.getDate())
+          if (date <= today) {
+            date.setMonth(date.getMonth() + 1)
+          }
+          break
+        case 'weekly': {
+          const dayOfWeek = start.getDay()
+          const currentDayOfWeek = today.getDay()
+          const daysUntilNext = (dayOfWeek - currentDayOfWeek + 7) % 7
+          if (daysUntilNext === 0) {
+            date.setDate(date.getDate() + 7)
+          } else {
+            date.setDate(date.getDate() + daysUntilNext)
+          }
+          break
+        }
+        case 'biweekly': {
+          const daysSinceStart = Math.floor((today - start) / (1000 * 60 * 60 * 24))
+          const weeksSinceStart = Math.floor(daysSinceStart / 14)
+          date = new Date(start)
+          date.setDate(date.getDate() + (weeksSinceStart + 1) * 14)
+          break
+        }
+        case 'quarterly':
+          date.setDate(start.getDate())
+          date.setMonth(start.getMonth())
+          while (date <= today) {
+            date.setMonth(date.getMonth() + 3)
+          }
+          break
+        case 'yearly':
+          date.setDate(start.getDate())
+          date.setMonth(start.getMonth())
+          while (date <= today) {
+            date.setFullYear(date.getFullYear() + 1)
+          }
+          break
+        case 'daily':
+          date.setDate(date.getDate() + 1)
+          break
+        default:
+          date.setMonth(date.getMonth() + 1)
+      }
+    } else {
+      // Start date is in the future, use it as is
+      switch (frequency) {
+        case 'daily':
+          date.setDate(date.getDate() + 1)
+          break
+        case 'weekly':
+          date.setDate(date.getDate() + 7)
+          break
+        case 'biweekly':
+          date.setDate(date.getDate() + 14)
+          break
+        case 'monthly':
+          date.setMonth(date.getMonth() + 1)
+          break
+        case 'quarterly':
+          date.setMonth(date.getMonth() + 3)
+          break
+        case 'yearly':
+          date.setFullYear(date.getFullYear() + 1)
+          break
+        default:
+          date.setMonth(date.getMonth() + 1)
+      }
     }
 
     return date.toISOString().split('T')[0]
