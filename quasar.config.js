@@ -44,7 +44,7 @@ export default defineConfig((/* ctx */) => {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: process.env.NODE_ENV === 'production' ? '/mind-life-key/' : '/',
+      publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
       // analyze: true,
       // env: {},
       // rawDefine: {}
