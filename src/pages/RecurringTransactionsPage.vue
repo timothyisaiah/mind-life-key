@@ -91,7 +91,9 @@
                             Active Recurring Transactions ({{ activeRecurringTransactions.length }})
                         </div>
 
-                        <div v-if="activeRecurringTransactions.length === 0" class="text-center text-grey-6 q-py-xl">
+                        <RecurringListSkeleton v-if="!financialStore.isLoaded && financialStore.isLoading" :row-count="6" />
+
+                        <div v-else-if="activeRecurringTransactions.length === 0" class="text-center text-grey-6 q-py-xl">
                             <q-icon name="repeat" size="4rem" class="q-mb-md" />
                             <div class="text-h6">No recurring transactions yet</div>
                             <div class="text-body2">Set up recurring transactions to automate your finances</div>
@@ -204,6 +206,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { Notify } from 'quasar'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency, formatDate } from 'src/utils/formatters'
+import RecurringListSkeleton from 'src/components/skeletons/RecurringListSkeleton.vue'
 
 const financialStore = useFinancialStore()
 
@@ -370,7 +373,7 @@ const deleteRecurringTransaction = () => {
 const processRecurringTransactions = async () => {
     isProcessing.value = true
     try {
-        const processed = financialStore.processRecurringTransactions()
+        const processed = financialStore.processRecurringTransactions(true)
 
         if (processed.length > 0) {
             // Show success message
@@ -443,7 +446,6 @@ watch(() => financialStore.transactions, () => {
 }, { deep: true })
 
 onMounted(() => {
-    financialStore.loadFromLocalStorage()
     // Process recurring transactions on page load
     processRecurringTransactions()
 })

@@ -53,7 +53,9 @@
               Transactions ({{ filteredTransactions.length }})
             </div>
 
-            <div v-if="filteredTransactions.length === 0" class="text-center text-theme-secondary q-py-xl">
+            <TransactionListSkeleton v-if="!isLoaded && isLoading" :row-count="10" />
+
+            <div v-else-if="filteredTransactions.length === 0" class="text-center text-theme-secondary q-py-xl">
               <q-icon name="receipt_long" size="4rem" class="q-mb-md" />
               <div class="text-h6">No transactions found</div>
               <div class="text-body2">Add your first transaction to get started</div>
@@ -157,6 +159,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatCurrency, formatDate } from 'src/utils/formatters'
+import TransactionListSkeleton from 'src/components/skeletons/TransactionListSkeleton.vue'
 
 const financialStore = useFinancialStore()
 
@@ -191,6 +194,8 @@ const transactionForm = ref({
 
 // Computed
 const transactions = computed(() => financialStore.transactions)
+const isLoaded = computed(() => financialStore.isLoaded)
+const isLoading = computed(() => financialStore.isLoading)
 const categories = computed(() => financialStore.categories)
 const supportedCurrencies = computed(() => financialStore.supportedCurrencies)
 
@@ -345,8 +350,10 @@ watch(() => financialStore.categories, () => {
   triggerPageRefresh()
 }, { deep: true, immediate: false })
 
-onMounted(() => {
-  financialStore.loadFromLocalStorage()
+onMounted(async () => {
+  if (!financialStore.isLoaded && !financialStore.isLoading) {
+    await financialStore.initializeFromApi()
+  }
 })
 </script>
 

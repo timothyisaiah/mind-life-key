@@ -44,19 +44,12 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       return
     }
 
-    // If user has a PIN but is not authenticated, redirect to auth
-    if (authStore.hasPin && !authStore.isAuthenticated) {
+    // Require authentication for all other routes
+    if (!authStore.isAuthenticated) {
       next({ name: 'auth' })
       return
     }
 
-    // If user doesn't have a PIN, redirect to auth to set it up
-    if (!authStore.hasPin) {
-      next({ name: 'auth' })
-      return
-    }
-
-    // User is authenticated, allow access
     next()
   })
 

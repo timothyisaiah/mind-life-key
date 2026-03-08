@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import CryptoJS from 'crypto-js'
 import { formatCurrency } from 'src/utils/formatters'
+import { apiRequest, getAuthToken } from 'src/utils/apiClient'
 
 export const useFinancialStore = defineStore('financial', () => {
   // State
@@ -59,6 +60,93 @@ export const useFinancialStore = defineStore('financial', () => {
 
   // Encryption key (in production, this should be user-specific and securely stored)
   const ENCRYPTION_KEY = 'mindlifekey-2024'
+  const STORAGE_KEY = 'mindlifekey_data'
+  const isLoaded = ref(false)
+  const isLoading = ref(false)
+  const pendingCreates = new Map()
+  const lastRecurringProcessDate = ref(null)
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+  const isUuid = (value) => {
+    return typeof value === 'string' && uuidPattern.test(value)
+  }
+
+  const generateUuid = () => {
+    if (globalThis.crypto?.randomUUID) {
+      return globalThis.crypto.randomUUID()
+    }
+
+    const getRandom = () => Math.floor(Math.random() * 256)
+    const bytes = new Array(16).fill(0).map(() => getRandom())
+    bytes[6] = (bytes[6] & 0x0f) | 0x40
+    bytes[8] = (bytes[8] & 0x3f) | 0x80
+
+    const toHex = (byte) => byte.toString(16).padStart(2, '0')
+    const hex = bytes.map(toHex).join('')
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+  }
+
+  const normalizeLegacyIds = () => {
+    const goalMap = new Map()
+    const budgetMap = new Map()
+    const recurringMap = new Map()
+
+    const normalizeList = (listRef, map) => {
+      listRef.value = listRef.value.map((item) => {
+        if (item && !isUuid(item.id)) {
+          const newId = generateUuid()
+          map.set(item.id, newId)
+          return { ...item, id: newId }
+        }
+        return item
+      })
+    }
+
+    normalizeList(goals, goalMap)
+    normalizeList(budgets, budgetMap)
+    normalizeList(recurringTransactions, recurringMap)
+
+    transactions.value = transactions.value.map((transaction) => {
+      const updates = {}
+      if (transaction && !isUuid(transaction.id)) {
+        updates.id = generateUuid()
+      }
+      if (
+        transaction?.recurringTransactionId &&
+        recurringMap.has(transaction.recurringTransactionId)
+      ) {
+        updates.recurringTransactionId = recurringMap.get(transaction.recurringTransactionId)
+      }
+      return Object.keys(updates).length ? { ...transaction, ...updates } : transaction
+    })
+
+    if (autoAllocationSettings.value?.priorityOrder?.length) {
+      autoAllocationSettings.value.priorityOrder = autoAllocationSettings.value.priorityOrder.map(
+        (id) => goalMap.get(id) || id,
+      )
+    }
+
+    notifications.value = notifications.value.map((notification) => {
+      if (!notification?.data) return notification
+
+      const dataUpdates = {}
+      if (notification.data.goalId && goalMap.has(notification.data.goalId)) {
+        dataUpdates.goalId = goalMap.get(notification.data.goalId)
+      }
+      if (notification.data.budgetId && budgetMap.has(notification.data.budgetId)) {
+        dataUpdates.budgetId = budgetMap.get(notification.data.budgetId)
+      }
+      if (notification.data.recurringId && recurringMap.has(notification.data.recurringId)) {
+        dataUpdates.recurringId = recurringMap.get(notification.data.recurringId)
+      }
+
+      if (Object.keys(dataUpdates).length === 0) return notification
+      return {
+        ...notification,
+        data: { ...notification.data, ...dataUpdates },
+      }
+    })
+  }
 
   // Currency conversion functions
   const convertCurrency = (amount, fromCurrency, toCurrency = userSettings.value.currency) => {
@@ -190,13 +278,15 @@ export const useFinancialStore = defineStore('financial', () => {
   // Actions
   const addTransaction = (transaction) => {
     const newTransaction = {
-      id: Date.now(),
+      id: generateUuid(),
       ...transaction,
       date: transaction.date || new Date().toISOString().split('T')[0],
       currency: transaction.currency || 'UGX', // Default to UGX
     }
     transactions.value.push(newTransaction)
     saveToLocalStorage()
+    const apiPayload = normalizeAmountFields(newTransaction, ['amount'])
+    void createRemoteRecord('/api/transactions', newTransaction, transactions, apiPayload)
   }
 
   const updateTransaction = (id, updates) => {
@@ -204,6 +294,8 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       transactions.value[index] = { ...transactions.value[index], ...updates }
       saveToLocalStorage()
+      const apiPayload = normalizeAmountFields(updates, ['amount'])
+      void updateRemoteRecord('/api/transactions', id, apiPayload, transactions)
     }
   }
 
@@ -212,18 +304,21 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       transactions.value.splice(index, 1)
       saveToLocalStorage()
+      void deleteRemoteRecord('/api/transactions', id)
     }
   }
 
   const addGoal = (goal) => {
     const newGoal = {
-      id: Date.now(),
+      id: generateUuid(),
       ...goal,
       currentAmount: goal.currentAmount || 0,
       createdAt: new Date().toISOString(),
     }
     goals.value.push(newGoal)
     saveToLocalStorage()
+    const apiPayload = normalizeAmountFields(newGoal, ['targetAmount', 'currentAmount'])
+    void createRemoteRecord('/api/goals', newGoal, goals, apiPayload)
   }
 
   const updateGoal = (id, updates) => {
@@ -231,6 +326,8 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       goals.value[index] = { ...goals.value[index], ...updates }
       saveToLocalStorage()
+      const apiPayload = normalizeAmountFields(updates, ['targetAmount', 'currentAmount'])
+      void updateRemoteRecord('/api/goals', id, apiPayload, goals)
     }
   }
 
@@ -244,6 +341,8 @@ export const useFinancialStore = defineStore('financial', () => {
         autoAllocationSettings.value.priorityOrder.splice(priorityIndex, 1)
       }
       saveToLocalStorage()
+      void deleteRemoteRecord('/api/goals', id)
+      void persistAutoAllocationSettings()
     }
   }
 
@@ -333,13 +432,15 @@ export const useFinancialStore = defineStore('financial', () => {
 
     achievements.forEach((achievement) => {
       if (achievement.condition() && !userAchievements.value.find((a) => a.id === achievement.id)) {
-        userAchievements.value.push({
+        const newAchievement = {
           ...achievement,
           earned: true,
           earnedAt: new Date().toISOString(),
           goalId: goalId,
-        })
+        }
+        userAchievements.value.push(newAchievement)
         saveToLocalStorage()
+        void createAchievementRemote(newAchievement)
       }
     })
   }
@@ -385,21 +486,25 @@ export const useFinancialStore = defineStore('financial', () => {
   const updateAutoAllocationSettings = (settings) => {
     autoAllocationSettings.value = { ...autoAllocationSettings.value, ...settings }
     saveToLocalStorage()
+    void persistAutoAllocationSettings()
   }
 
   const setGoalPriority = (goalIds) => {
     autoAllocationSettings.value.priorityOrder = goalIds
     saveToLocalStorage()
+    void persistAutoAllocationSettings()
   }
 
   const addBudget = (budget) => {
     const newBudget = {
-      id: Date.now(),
+      id: generateUuid(),
       ...budget,
       spent: 0,
     }
     budgets.value.push(newBudget)
     saveToLocalStorage()
+    const apiPayload = normalizeAmountFields(newBudget, ['amount', 'spent'])
+    void createRemoteRecord('/api/budgets', newBudget, budgets, apiPayload)
   }
 
   const updateBudget = (id, updates) => {
@@ -407,6 +512,8 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       budgets.value[index] = { ...budgets.value[index], ...updates }
       saveToLocalStorage()
+      const apiPayload = normalizeAmountFields(updates, ['amount', 'spent'])
+      void updateRemoteRecord('/api/budgets', id, apiPayload, budgets)
     }
   }
 
@@ -415,13 +522,14 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       budgets.value.splice(index, 1)
       saveToLocalStorage()
+      void deleteRemoteRecord('/api/budgets', id)
     }
   }
 
   // Recurring Transactions Actions
   const addRecurringTransaction = (recurringTransaction) => {
     const newRecurringTransaction = {
-      id: Date.now(),
+      id: generateUuid(),
       ...recurringTransaction,
       createdAt: new Date().toISOString(),
       lastProcessed: null,
@@ -429,6 +537,25 @@ export const useFinancialStore = defineStore('financial', () => {
     }
     recurringTransactions.value.push(newRecurringTransaction)
     saveToLocalStorage()
+    const apiPayload = normalizeAmountFields(
+      {
+        description: newRecurringTransaction.description,
+        amount: newRecurringTransaction.amount,
+        type: newRecurringTransaction.type,
+        categoryId: newRecurringTransaction.categoryId,
+        frequency: newRecurringTransaction.frequency,
+        startDate: newRecurringTransaction.startDate,
+        notes: newRecurringTransaction.notes,
+        isActive: newRecurringTransaction.isActive,
+      },
+      ['amount'],
+    )
+    void createRemoteRecord(
+      '/api/recurring-transactions',
+      newRecurringTransaction,
+      recurringTransactions,
+      apiPayload,
+    )
   }
 
   const updateRecurringTransaction = (id, updates) => {
@@ -445,6 +572,8 @@ export const useFinancialStore = defineStore('financial', () => {
           : recurringTransactions.value[index].nextDue,
       }
       saveToLocalStorage()
+      const apiPayload = normalizeAmountFields(updates, ['amount'])
+      void updateRemoteRecord('/api/recurring-transactions', id, apiPayload, recurringTransactions)
     }
   }
 
@@ -453,11 +582,16 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       recurringTransactions.value.splice(index, 1)
       saveToLocalStorage()
+      void deleteRemoteRecord('/api/recurring-transactions', id)
     }
   }
 
-  const processRecurringTransactions = () => {
+  const processRecurringTransactions = (force = false) => {
     const today = new Date().toISOString().split('T')[0]
+    if (!force && lastRecurringProcessDate.value === today) {
+      return []
+    }
+
     const processed = []
 
     recurringTransactions.value.forEach((recurring) => {
@@ -486,12 +620,17 @@ export const useFinancialStore = defineStore('financial', () => {
       }
     })
 
+    if (processed.length > 0 || force) {
+      lastRecurringProcessDate.value = today
+    }
+
     return processed
   }
 
   const updateSettings = (settings) => {
     userSettings.value = { ...userSettings.value, ...settings }
     saveToLocalStorage()
+    void persistUserSettings()
   }
 
   // Helper function to calculate next due date
@@ -594,6 +733,247 @@ export const useFinancialStore = defineStore('financial', () => {
     }
   }
 
+  const unwrapPayload = (payload, fallback) => {
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+      return payload.data ?? fallback
+    }
+    return payload ?? fallback
+  }
+
+  const unwrapListPayload = (payload, key, fallback = []) => {
+    const listKeys = [key, 'items', 'results']
+    if (Array.isArray(payload)) return payload
+    if (payload && typeof payload === 'object') {
+      if ('data' in payload) {
+        const data = payload.data
+        if (Array.isArray(data)) return data
+        if (data && typeof data === 'object') {
+          for (const listKey of listKeys) {
+            if (listKey in data) {
+              return Array.isArray(data[listKey]) ? data[listKey] : fallback
+            }
+          }
+        }
+      }
+      for (const listKey of listKeys) {
+        if (listKey in payload) {
+          return Array.isArray(payload[listKey]) ? payload[listKey] : fallback
+        }
+      }
+    }
+    return fallback
+  }
+
+  const normalizeAmountFields = (payload, fields) => {
+    const normalized = { ...payload }
+    fields.forEach((field) => {
+      if (normalized[field] !== undefined && normalized[field] !== null) {
+        normalized[field] = String(normalized[field])
+      }
+    })
+    return normalized
+  }
+
+  const toNumber = (value, fallback = 0) => {
+    if (value === null || value === undefined || value === '') {
+      return fallback
+    }
+    const parsed = Number(value)
+    return Number.isNaN(parsed) ? fallback : parsed
+  }
+
+  const normalizeDateValue = (value) => {
+    if (!value) return null
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return null
+    return date.toISOString().split('T')[0]
+  }
+
+  const normalizeUserSettings = (settings) => {
+    if (!settings) return null
+    return {
+      ...settings,
+      startingBalance: toNumber(settings.startingBalance, 0),
+      currentBalance: toNumber(settings.currentBalance, 0),
+    }
+  }
+
+  const normalizeTransaction = (transaction) => {
+    const normalizedDate = normalizeDateValue(
+      transaction?.date ?? transaction?.transactionDate ?? transaction?.createdAt,
+    )
+    return {
+      ...transaction,
+      date: normalizedDate || transaction?.date || null,
+      amount: toNumber(transaction.amount, 0),
+    }
+  }
+
+  const normalizeBudget = (budget) => ({
+    ...budget,
+    amount: toNumber(budget.amount, 0),
+    spent: toNumber(budget.spent, 0),
+  })
+
+  const normalizeGoal = (goal) => ({
+    ...goal,
+    targetAmount: toNumber(goal.targetAmount, 0),
+    currentAmount: toNumber(goal.currentAmount, 0),
+  })
+
+  const normalizeRecurring = (recurring) => ({
+    ...recurring,
+    amount: toNumber(recurring.amount, 0),
+  })
+
+  const applyServerRecord = (listRef, tempId, record) => {
+    if (!record) return
+    const index = listRef.value.findIndex((item) => item.id === tempId)
+    if (index !== -1) {
+      listRef.value[index] = { ...listRef.value[index], ...record }
+    }
+  }
+
+  const createRemoteRecord = async (endpoint, record, listRef, payloadOverride) => {
+    const tempId = record?.id
+    const createPromise = (async () => {
+      try {
+        const payload = payloadOverride ? { ...payloadOverride } : { ...record }
+        delete payload.id
+        const response = await apiRequest(endpoint, { method: 'POST', body: payload })
+        return unwrapPayload(response, null)
+      } catch (error) {
+        console.warn(`Failed to create ${endpoint}:`, error)
+        return null
+      }
+    })()
+
+    if (tempId) {
+      pendingCreates.set(tempId, createPromise)
+    }
+
+    const serverRecord = await createPromise
+
+    if (tempId) {
+      pendingCreates.delete(tempId)
+    }
+
+    if (serverRecord?.id && listRef && tempId) {
+      applyServerRecord(listRef, tempId, serverRecord)
+    }
+
+    return serverRecord
+  }
+
+  const resolveRemoteId = async (id) => {
+    if (pendingCreates.has(id)) {
+      const serverRecord = await pendingCreates.get(id)
+      if (serverRecord?.id) {
+        return serverRecord.id
+      }
+    }
+    return id
+  }
+
+  const updateRemoteRecord = async (endpoint, id, updates, listRef) => {
+    try {
+      if (!isUuid(id) && listRef) {
+        const record = listRef.value.find((item) => item.id === id)
+        if (record) {
+          await createRemoteRecord(endpoint, record, listRef)
+        }
+        return
+      }
+
+      const remoteId = await resolveRemoteId(id)
+      if (!isUuid(remoteId)) return
+
+      const response = await apiRequest(`${endpoint}/${remoteId}`, { method: 'PUT', body: updates })
+      const serverRecord = unwrapPayload(response, null)
+      if (serverRecord && listRef) {
+        applyServerRecord(listRef, id, serverRecord)
+      }
+    } catch (error) {
+      console.warn(`Failed to update ${endpoint}/${id}:`, error)
+    }
+  }
+
+  const deleteRemoteRecord = async (endpoint, id) => {
+    try {
+      const remoteId = await resolveRemoteId(id)
+      if (!isUuid(remoteId)) return
+      await apiRequest(`${endpoint}/${remoteId}`, { method: 'DELETE' })
+    } catch (error) {
+      console.warn(`Failed to delete ${endpoint}/${id}:`, error)
+    }
+  }
+
+  const deleteAllRemoteRecords = async (endpoint) => {
+    try {
+      const payload = await apiRequest(endpoint)
+      const records = unwrapPayload(payload, [])
+      await Promise.all(records.map((record) => deleteRemoteRecord(endpoint, record.id)))
+    } catch (error) {
+      console.warn(`Failed to clear ${endpoint}:`, error)
+    }
+  }
+
+  const persistUserSettings = async () => {
+    try {
+      await apiRequest('/api/settings/user', { method: 'PUT', body: userSettings.value })
+    } catch (error) {
+      console.warn('Failed to persist user settings:', error)
+    }
+  }
+
+  const persistNotificationSettings = async () => {
+    try {
+      await apiRequest('/api/settings/notifications', {
+        method: 'PUT',
+        body: notificationSettings.value,
+      })
+    } catch (error) {
+      console.warn('Failed to persist notification settings:', error)
+    }
+  }
+
+  const persistAutoAllocationSettings = async () => {
+    try {
+      await apiRequest('/api/settings/auto-allocation', {
+        method: 'PUT',
+        body: autoAllocationSettings.value,
+      })
+    } catch (error) {
+      console.warn('Failed to persist auto-allocation settings:', error)
+    }
+  }
+
+  const createAchievementRemote = async (achievement) => {
+    try {
+      const payload = { ...achievement }
+      delete payload.id
+      await apiRequest('/api/achievements', {
+        method: 'POST',
+        body: payload,
+      })
+    } catch (error) {
+      console.warn('Failed to create achievement:', error)
+    }
+  }
+
+  const createNotificationRemote = async (notification) => {
+    try {
+      const payload = { ...notification }
+      delete payload.id
+      await apiRequest('/api/notifications', {
+        method: 'POST',
+        body: payload,
+      })
+    } catch (error) {
+      console.warn('Failed to create notification:', error)
+    }
+  }
+
   const saveToLocalStorage = () => {
     const data = {
       transactions: transactions.value,
@@ -610,11 +990,11 @@ export const useFinancialStore = defineStore('financial', () => {
       exchangeRates: exchangeRates.value,
       lastExchangeRateUpdate: lastExchangeRateUpdate.value,
     }
-    localStorage.setItem('mindlifekey_data', encryptData(data))
+    localStorage.setItem(STORAGE_KEY, encryptData(data))
   }
 
   const loadFromLocalStorage = () => {
-    const encryptedData = localStorage.getItem('mindlifekey_data')
+    const encryptedData = localStorage.getItem(STORAGE_KEY)
     if (encryptedData) {
       const data = decryptData(encryptedData)
       if (data) {
@@ -631,7 +1011,128 @@ export const useFinancialStore = defineStore('financial', () => {
         supportedCurrencies.value = data.supportedCurrencies || supportedCurrencies.value
         exchangeRates.value = data.exchangeRates || {}
         lastExchangeRateUpdate.value = data.lastExchangeRateUpdate || null
+        normalizeLegacyIds()
+        saveToLocalStorage()
+        isLoaded.value = true
       }
+    }
+  }
+
+  const loadFromApi = async () => {
+    if (!getAuthToken()) return false
+    if (isLoading.value) return false
+    try {
+      isLoading.value = true
+      const requests = [
+        ['transactions', '/api/transactions'],
+        ['budgets', '/api/budgets'],
+        ['goals', '/api/goals'],
+        ['recurring-transactions', '/api/recurring-transactions'],
+        ['categories', '/api/categories'],
+        ['settings-user', '/api/settings/user'],
+        ['settings-notifications', '/api/settings/notifications'],
+        ['settings-auto-allocation', '/api/settings/auto-allocation'],
+        ['exchange-rates', '/api/exchange-rates'],
+        ['achievements', '/api/achievements'],
+        ['notifications', '/api/notifications'],
+      ]
+
+      const startedAt = performance.now()
+      console.info('[MindLifeKey] Loading API data...')
+
+      const results = await Promise.all(
+        requests.map(async ([label, url]) => {
+          const start = performance.now()
+          const payload = await apiRequest(url)
+          const elapsedMs = Math.round(performance.now() - start)
+          console.info(`[MindLifeKey] Loaded ${label} (${elapsedMs} ms)`)
+          return payload
+        }),
+      )
+
+      const totalMs = Math.round(performance.now() - startedAt)
+      console.info(`[MindLifeKey] API data load complete (${totalMs} ms)`)
+
+      const [
+        transactionsPayload,
+        budgetsPayload,
+        goalsPayload,
+        recurringPayload,
+        categoriesPayload,
+        userSettingsPayload,
+        notificationSettingsPayload,
+        autoAllocationPayload,
+        exchangeRatesPayload,
+        achievementsPayload,
+        notificationsPayload,
+      ] = results
+
+      transactions.value = unwrapListPayload(transactionsPayload, 'transactions', []).map(
+        normalizeTransaction,
+      )
+      budgets.value = unwrapListPayload(budgetsPayload, 'budgets', []).map(normalizeBudget)
+      goals.value = unwrapListPayload(goalsPayload, 'goals', []).map(normalizeGoal)
+      recurringTransactions.value = unwrapListPayload(
+        recurringPayload,
+        'recurringTransactions',
+        [],
+      ).map(normalizeRecurring)
+      const incomingCategories = unwrapListPayload(
+        categoriesPayload,
+        'categories',
+        categories.value,
+      )
+      categories.value =
+        Array.isArray(incomingCategories) && incomingCategories.length > 0
+          ? incomingCategories
+          : categories.value
+
+      const incomingUserSettings = normalizeUserSettings(unwrapPayload(userSettingsPayload, null))
+      if (incomingUserSettings) {
+        userSettings.value = { ...userSettings.value, ...incomingUserSettings }
+      }
+
+      const incomingNotificationSettings = unwrapPayload(notificationSettingsPayload, null)
+      if (incomingNotificationSettings) {
+        notificationSettings.value = {
+          ...notificationSettings.value,
+          ...incomingNotificationSettings,
+        }
+      }
+
+      const incomingAutoAllocation = unwrapPayload(autoAllocationPayload, null)
+      if (incomingAutoAllocation) {
+        autoAllocationSettings.value = {
+          ...autoAllocationSettings.value,
+          ...incomingAutoAllocation,
+        }
+      }
+
+      const incomingExchangeRates = unwrapPayload(exchangeRatesPayload, null)
+      if (incomingExchangeRates) {
+        exchangeRates.value =
+          incomingExchangeRates.rates || incomingExchangeRates.exchangeRates || {}
+        lastExchangeRateUpdate.value =
+          incomingExchangeRates.lastExchangeRateUpdate || incomingExchangeRates.lastUpdated || null
+      }
+
+      userAchievements.value = unwrapListPayload(achievementsPayload, 'achievements', [])
+      notifications.value = unwrapListPayload(notificationsPayload, 'notifications', [])
+      isLoaded.value = true
+      saveToLocalStorage()
+      return true
+    } catch (error) {
+      console.warn('Failed to load data from API:', error)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  const initializeFromApi = async () => {
+    const loaded = await loadFromApi()
+    if (!loaded) {
+      loadFromLocalStorage()
     }
   }
 
@@ -663,11 +1164,24 @@ export const useFinancialStore = defineStore('financial', () => {
       startingBalance: 0,
       currentBalance: 0,
     }
-    localStorage.removeItem('mindlifekey_data')
+    localStorage.removeItem(STORAGE_KEY)
+    void deleteAllRemoteRecords('/api/transactions')
+    void deleteAllRemoteRecords('/api/budgets')
+    void deleteAllRemoteRecords('/api/goals')
+    void deleteAllRemoteRecords('/api/recurring-transactions')
+    void deleteAllRemoteRecords('/api/achievements')
+    void deleteAllRemoteRecords('/api/notifications')
+    void persistUserSettings()
+    void persistNotificationSettings()
+    void persistAutoAllocationSettings()
   }
 
   // Initialize store
-  loadFromLocalStorage()
+  if (getAuthToken()) {
+    void initializeFromApi()
+  } else {
+    loadFromLocalStorage()
+  }
 
   // Computed properties for notifications
   const upcomingBills = computed(() => {
@@ -1060,6 +1574,7 @@ export const useFinancialStore = defineStore('financial', () => {
     newNotifications.forEach((notification) => {
       if (!notifications.value.find((n) => n.id === notification.id)) {
         notifications.value.push(notification)
+        void createNotificationRemote(notification)
       }
     })
 
@@ -1265,6 +1780,10 @@ export const useFinancialStore = defineStore('financial', () => {
       notification.read = true
       notification.readAt = new Date().toISOString()
       saveToLocalStorage()
+      void updateRemoteRecord('/api/notifications', notificationId, {
+        read: true,
+        readAt: notification.readAt,
+      })
     }
   }
 
@@ -1273,6 +1792,10 @@ export const useFinancialStore = defineStore('financial', () => {
       if (!notification.read) {
         notification.read = true
         notification.readAt = new Date().toISOString()
+        void updateRemoteRecord('/api/notifications', notification.id, {
+          read: true,
+          readAt: notification.readAt,
+        })
       }
     })
     saveToLocalStorage()
@@ -1283,17 +1806,20 @@ export const useFinancialStore = defineStore('financial', () => {
     if (index !== -1) {
       notifications.value.splice(index, 1)
       saveToLocalStorage()
+      void deleteRemoteRecord('/api/notifications', notificationId)
     }
   }
 
   const clearAllNotifications = () => {
     notifications.value = []
     saveToLocalStorage()
+    void deleteAllRemoteRecords('/api/notifications')
   }
 
   const updateNotificationSettings = (settings) => {
     notificationSettings.value = { ...notificationSettings.value, ...settings }
     saveToLocalStorage()
+    void persistNotificationSettings()
   }
 
   // Currency management actions
@@ -1316,6 +1842,13 @@ export const useFinancialStore = defineStore('financial', () => {
       })
 
       saveToLocalStorage()
+      await apiRequest('/api/exchange-rates', {
+        method: 'PUT',
+        body: {
+          rates: exchangeRates.value,
+          lastExchangeRateUpdate: lastExchangeRateUpdate.value,
+        },
+      })
     } catch (error) {
       console.error('Failed to update exchange rates:', error)
     }
@@ -1326,6 +1859,7 @@ export const useFinancialStore = defineStore('financial', () => {
     if (currency) {
       userSettings.value.currency = currencyCode
       saveToLocalStorage()
+      void persistUserSettings()
     }
   }
 
@@ -1419,8 +1953,11 @@ export const useFinancialStore = defineStore('financial', () => {
     getUnreadNotificationsCount,
     getHighPriorityNotifications,
     updateSettings,
+    isLoaded,
+    isLoading,
     saveToLocalStorage,
     loadFromLocalStorage,
+    initializeFromApi,
     clearAllData,
 
     // Currency management

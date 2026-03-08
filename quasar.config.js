@@ -4,6 +4,11 @@
 import { defineConfig } from '#q-app/wrappers'
 
 export default defineConfig((/* ctx */) => {
+  const isVercel = process.env.VERCEL === '1'
+  const isProd = process.env.NODE_ENV === 'production'
+  const useHistory = isVercel || !isProd
+  const basePath = isVercel ? '/' : isProd ? '/mind-life-key/' : '/'
+
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
     // preFetch: true,
@@ -37,14 +42,14 @@ export default defineConfig((/* ctx */) => {
         node: 'node20',
       },
 
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
-      vueRouterBase: process.env.NODE_ENV === 'production' ? '/mind-life-key/' : '/',
+      vueRouterMode: useHistory ? 'history' : 'hash', // available values: 'hash', 'history'
+      vueRouterBase: basePath,
       // vueDevtools,
       // vueOptionsAPI: false,
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      publicPath: process.env.NODE_ENV === 'production' ? '/mind-life-key/' : '/',
+      publicPath: basePath,
       // analyze: true,
       // env: {},
       // rawDefine: {}

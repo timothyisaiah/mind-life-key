@@ -1,5 +1,10 @@
 <template>
   <q-page class="dashboard-page">
+    <!-- Skeleton loader while initial data is loading -->
+    <DashboardSkeleton v-if="!isLoaded && isLoading" />
+
+    <!-- Main dashboard content -->
+    <template v-else>
     <!-- Header Section -->
     <div class="dashboard-header q-pa-md">
       <div class="row items-center justify-between">
@@ -202,7 +207,7 @@
               the app</div>
             <div class="row q-col-gutter-md justify-center">
               <q-btn color="primary" label="Add Transaction" :to="{ name: 'transactions' }" icon="add" />
-              <q-btn color="secondary" label="Load Demo Data" @click="loadDemoDataHandler" icon="play_arrow" />
+              <!-- <q-btn color="secondary" label="Load Demo Data" @click="loadDemoDataHandler" icon="play_arrow" /> -->
             </div>
           </div>
           <div v-else>
@@ -463,16 +468,19 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    </template>
   </q-page>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useFinancialStore } from 'src/stores/financial'
 import { formatDate, formatDateShort } from 'src/utils/formatters'
-import { loadDemoData } from 'src/utils/demoData'
+// import { loadDemoData } from 'src/utils/demoData'
 import ExpenseChart from 'src/components/charts/ExpenseChart.vue'
 import BalanceChart from 'src/components/charts/BalanceChart.vue'
+import DashboardSkeleton from 'src/components/skeletons/DashboardSkeleton.vue'
 // import ThemeShowcase from 'src/components/ThemeShowcase.vue'
 
 const financialStore = useFinancialStore()
@@ -489,8 +497,10 @@ const {
   expensesByCategory,
   upcomingBills,
   overdueBills,
-  supportedCurrencies
-} = financialStore
+  supportedCurrencies,
+  isLoaded,
+  isLoading
+} = storeToRefs(financialStore)
 
 const recentTransactions = computed(() => {
   return [...(transactions.value || [])]
@@ -647,10 +657,10 @@ const addGoal = () => {
   }
 }
 
-const loadDemoDataHandler = () => {
-  loadDemoData(financialStore)
-  triggerDashboardRefresh()
-}
+// const loadDemoDataHandler = () => {
+//   loadDemoData(financialStore)
+//   triggerDashboardRefresh()
+// }
 
 // Live dashboard methods
 const triggerDashboardRefresh = async () => {
@@ -712,8 +722,6 @@ const stopAutoRefresh = () => {
 }
 
 onMounted(() => {
-  // Load data from localStorage
-  financialStore.loadFromLocalStorage()
   // Process recurring transactions
   financialStore.processRecurringTransactions()
   // Generate smart notifications

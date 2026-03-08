@@ -175,7 +175,7 @@ function exportData() {
 
 function resetApp() {
   financialStore.clearAllData()
-  authStore.clearAuth()
+  authStore.logout()
   showResetDialog.value = false
   Notify.create({
     type: 'positive',

@@ -25,10 +25,11 @@ import {
     LineElement,
     PointElement,
     LinearScale,
-    CategoryScale
+    CategoryScale,
+    Filler
 } from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, LinearScale, CategoryScale)
+ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, LinearScale, CategoryScale, Filler)
 
 const props = defineProps({
     transactions: {
@@ -52,7 +53,7 @@ const chartData = computed(() => {
     // Generate last 30 days
     const labels = []
     const balanceData = []
-    let currentBalance = props.startingBalance
+    let currentBalance = Number(props.startingBalance) || 0
 
     for (let i = 29; i >= 0; i--) {
         const date = new Date()
@@ -67,9 +68,9 @@ const chartData = computed(() => {
 
         dayTransactions.forEach(t => {
             if (t.type === 'income') {
-                currentBalance += t.amount
+                currentBalance += Number(t.amount) || 0
             } else {
-                currentBalance -= t.amount
+                currentBalance -= Number(t.amount) || 0
             }
         })
 
