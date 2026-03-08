@@ -364,7 +364,7 @@ const breakdownChartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'bottom'
+      position: 'bottom',
     }
   }
 }
