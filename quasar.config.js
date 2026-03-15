@@ -6,7 +6,6 @@ import { defineConfig } from '#q-app/wrappers'
 export default defineConfig((/* ctx */) => {
   const isVercel = process.env.VERCEL === '1'
   const isProd = process.env.NODE_ENV === 'production'
-  const useHistory = isVercel || !isProd
   const basePath = isVercel ? '/' : isProd ? '/mind-life-key/' : '/'
 
   return {
@@ -42,7 +41,7 @@ export default defineConfig((/* ctx */) => {
         node: 'node20',
       },
 
-      vueRouterMode: useHistory ? 'history' : 'hash', // available values: 'hash', 'history'
+      vueRouterMode: 'history',
       vueRouterBase: basePath,
       // vueDevtools,
       // vueOptionsAPI: false,
