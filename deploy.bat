@@ -71,6 +71,7 @@ echo [SUCCESS] Previous build cleaned
 REM Build the application
 echo [INFO] Building application for production...
 set NODE_ENV=production
+set VITE_API_BASE_URL=https://mind-life-key-api.vercel.app
 if "%PACKAGE_MANAGER%"=="yarn" (
     yarn build
 ) else (
