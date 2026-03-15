@@ -34,17 +34,33 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   })
 
-  // Route guard for authentication
+  // Handle GitHub Pages SPA redirect (404.html stores the original path)
+  let ghPagesRedirectHandled = false
   Router.beforeEach((to, from, next) => {
+    if (!ghPagesRedirectHandled) {
+      ghPagesRedirectHandled = true
+      const stored = sessionStorage.getItem('gh-pages-redirect')
+      if (stored) {
+        sessionStorage.removeItem('gh-pages-redirect')
+        const base = (process.env.VUE_ROUTER_BASE || '/').replace(/\/$/, '')
+        let path = stored
+        if (base && path.startsWith(base)) {
+          path = path.slice(base.length) || '/'
+        }
+        if (path !== to.fullPath) {
+          next(path)
+          return
+        }
+      }
+    }
+
     const authStore = useAuthStore()
 
-    // If going to auth page, allow it
     if (to.name === 'auth') {
       next()
       return
     }
 
-    // Require authentication for all other routes
     if (!authStore.isAuthenticated) {
       next({ name: 'auth' })
       return

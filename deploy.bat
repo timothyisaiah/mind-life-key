@@ -86,13 +86,9 @@ if not exist "dist\spa" (
 
 echo [SUCCESS] Application built successfully
 
-REM Create 404.html for GitHub Pages SPA support (serves the app for all routes)
-copy "dist\spa\index.html" "dist\spa\404.html"
-
 REM Prevent Jekyll processing on GitHub Pages
 type nul > "dist\spa\.nojekyll"
-
-echo [SUCCESS] Created 404.html and .nojekyll for SPA routing
+echo [SUCCESS] Build ready for GitHub Pages
 
 REM Create a temporary directory for deployment
 set TEMP_DIR=%TEMP%\mind-life-key-deploy-%RANDOM%
