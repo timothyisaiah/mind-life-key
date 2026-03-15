@@ -190,4 +190,4 @@ If you encounter any issues or have questions, please open an issue on GitHub or
 
 ---
 
-**MindLifeKey** - Take control of your financial future! 💰✨
+**MindLifeKey** - Take control of your financial future! 💰✨📛
